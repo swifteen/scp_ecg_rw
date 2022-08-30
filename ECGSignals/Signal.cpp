@@ -35,7 +35,8 @@ Signal::Signal(const Signal& rhs)
 Signal& Signal::operator=(const Signal& rhs)
 {
     // Prevent self-assignment
-    if (&rhs != this) {
+    if (&rhs != this)
+    {
         delete[] this->Rhythm;
         this->Rhythm = null;
         RhythmLength = 0;
@@ -58,10 +59,12 @@ void Signal::deepCopy(const Signal& rhs)
     this->RhythmEnd = rhs.RhythmEnd;
     this->RhythmLength = rhs.RhythmLength;
 
-    if ((rhs.RhythmLength > 0) && (rhs.Rhythm != null)) {
+    if ((rhs.RhythmLength > 0) && (rhs.Rhythm != null))
+    {
         this->Rhythm = new short[rhs.RhythmLength];
 
-        if (this->Rhythm != null) {
+        if (this->Rhythm != null)
+        {
             memcpy(this->Rhythm, rhs.Rhythm, rhs.RhythmLength);
         }
     }
@@ -80,8 +83,10 @@ Signal Signal::ApplyFilter(DSP.IFilter rhythmFilter, DSP.IFilter medianFilter)
     sig.RhythmStart = this.RhythmStart;
     sig.RhythmEnd = this.RhythmEnd;
 
-    if (this.Rhythm != null) {
-        if (rhythmFilter == null) {
+    if (this.Rhythm != null)
+    {
+        if (rhythmFilter == null)
+        {
             return null;
         }
 
@@ -89,13 +94,16 @@ Signal Signal::ApplyFilter(DSP.IFilter rhythmFilter, DSP.IFilter medianFilter)
         rhythmFilter.compute(this.Rhythm[0]);
         sig.Rhythm = new short[this.Rhythm.Length];
 
-        for (int i = 0; i < sig.Rhythm.Length; i++) {
+        for (int i = 0; i < sig.Rhythm.Length; i++)
+        {
             sig.Rhythm[i] = (short) Math.Round(rhythmFilter.compute(this.Rhythm[i]));
         }
     }
 
-    if (this.Median != null) {
-        if (medianFilter == null) {
+    if (this.Median != null)
+    {
+        if (medianFilter == null)
+        {
             return null;
         }
 
@@ -103,7 +111,8 @@ Signal Signal::ApplyFilter(DSP.IFilter rhythmFilter, DSP.IFilter medianFilter)
         medianFilter.compute(this.Median[0]);
         sig.Median = new short[this.Median.Length];
 
-        for (int i = 0; i < sig.Median.Length; i++) {
+        for (int i = 0; i < sig.Median.Length; i++)
+        {
             sig.Median[i] = (short) Math.Round(medianFilter.compute(this.Median[i]));
         }
     }
@@ -120,9 +129,12 @@ Signal Signal::ApplyFilter(DSP.IFilter rhythmFilter, DSP.IFilter medianFilter)
 bool Signal::IsNormal(const vector<Signal>& data)
 {
     if ((data.size() != 0)
-        && (data.size() >= 8)) {
-        for (int loper = 0; loper < 8; loper++) {
-            if ((data[loper].Type != (LeadType)(1 + loper))) {
+        && (data.size() >= 8))
+    {
+        for (int loper = 0; loper < 8; loper++)
+        {
+            if ((data[loper].Type != (LeadType)(1 + loper)))
+            {
                 return false;
             }
         }
@@ -140,12 +152,15 @@ bool Signal::IsNormal(const vector<Signal>& data)
 int Signal::NrSimultaneosly(const vector<Signal>& data)
 {
     if ((data.size() != 0)
-        && (data.size() > 1)) {
+        && (data.size() > 1))
+    {
         int Nr = 1;
 
-        for (; Nr < data.size(); Nr++) {
+        for (; Nr < data.size(); Nr++)
+        {
             if ((data[0].RhythmStart != data[Nr].RhythmStart)
-                || (data[0].RhythmEnd != data[Nr].RhythmEnd)) {
+                || (data[0].RhythmEnd != data[Nr].RhythmEnd))
+            {
                 break;
             }
         }
@@ -161,7 +176,8 @@ int Signal::NrSimultaneosly(const vector<Signal>& data)
 /// <param name="data">signal array</param>
 void Signal::SortOnType(vector<Signal>& data)
 {
-    if (data.size() != 0) {
+    if (data.size() != 0)
+    {
         SortOnType(data, 0, data.size() - 1);
     }
 }
@@ -174,7 +190,8 @@ void Signal::SortOnType(vector<Signal>& data)
 void Signal::SortOnType(vector<Signal>& data, int first, int last)
 {
     if ((data.size() != 0)
-        && (first < last)) {
+        && (first < last))
+    {
         int p = _PartitionOnType(data, first, last);
         SortOnType(data, first, p - 1);
         SortOnType(data, p + 1, last);
@@ -190,9 +207,11 @@ int Signal::_PartitionOnType(vector<Signal>& data, int first, int last)
     data[first] = pivot;
     p = first;
 
-    for (i = first + 1; i <= last; i++) {
+    for (i = first + 1; i <= last; i++)
+    {
         if ((data.size() == 0)
-            || (data[i].Type < pivot.Type)) {
+            || (data[i].Type < pivot.Type))
+        {
             t = data[++p];
             data[p] = data[i];
             data[i] = t;

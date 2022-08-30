@@ -35,7 +35,8 @@ typedef unsigned long ulong;
 
 #define null             0L
 
-typedef struct {
+typedef struct
+{
     int Year;
     int Month;
     int Day;

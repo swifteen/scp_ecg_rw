@@ -37,10 +37,12 @@ public:
         Length = length;
         Field = field;
 
-        if (length > 0) {
+        if (length > 0)
+        {
             Field = new uchar[length];
 
-            if (Field != null) {
+            if (Field != null)
+            {
                 memcpy(Field, field, length);
             }
         }
@@ -56,7 +58,8 @@ public:
     SCPStatement& operator=(const SCPStatement& rhs)
     {
         // Prevent self-assignment
-        if (&rhs != this) {
+        if (&rhs != this)
+        {
             delete[] this->Field;
             this->Field = null;
             deepCopy(rhs);
@@ -74,10 +77,12 @@ public:
     {
         this->Length = rhs.Length;
 
-        if ((rhs.Length > 0) && (rhs.Field != null)) {
+        if ((rhs.Length > 0) && (rhs.Field != null))
+        {
             this->Field = new uchar[rhs.Length];
 
-            if (this->Field != null) {
+            if (this->Field != null)
+            {
                 memcpy(this->Field, rhs.Field, rhs.Length);
             }
         }
@@ -91,11 +96,13 @@ public:
     /// <returns>0 on success</returns>
     int Write(uchar* buffer, int bufferLength, int offset)
     {
-        if (Field == null) {
+        if (Field == null)
+        {
             return 0x1;
         }
 
-        if ((offset + sizeof(SequenceNr) + sizeof(Length)) > bufferLength) {
+        if ((offset + sizeof(SequenceNr) + sizeof(Length)) > bufferLength)
+        {
             return 0x2;
         }
 
@@ -104,11 +111,13 @@ public:
         BytesTool::writeBytes(Length, buffer, bufferLength, offset, sizeof(Length), true);
         offset += sizeof(Length);
 
-        if ((offset + Length) > bufferLength) {
+        if ((offset + Length) > bufferLength)
+        {
             return 0x2;
         }
 
-        if (Length > 0) {
+        if (Length > 0)
+        {
             offset += BytesTool::copy(buffer, bufferLength, offset, Field, Length, 0, Length);
         }
 
@@ -159,7 +168,8 @@ int SCPSection8::_Write(uchar* buffer, int bufferLength, int offset)
     offset += sizeof(_NrStatements);
     _Statements.resize(_NrStatements);
 
-    for (int loper = 0; loper < _NrStatements; loper++) {
+    for (int loper = 0; loper < _NrStatements; loper++)
+    {
         _Statements[loper].Write(buffer, bufferLength, offset);
         offset += _Statements[loper].getLength();
     }
@@ -176,10 +186,12 @@ void SCPSection8::_Empty()
 
 int SCPSection8::_getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         int sum = sizeof(_Confirmed) + SCPTime::Size + SCPTime::Size + sizeof(_NrStatements);
 
-        for (int loper = 0; loper < _NrStatements; loper++) {
+        for (int loper = 0; loper < _NrStatements; loper++)
+        {
             sum += _Statements[loper].getLength();
         }
 
@@ -197,7 +209,8 @@ ushort SCPSection8::getSectionID()
 bool SCPSection8::Works()
 {
     if (((_NrStatements == 0)
-         || ((_Statements.size() != 0)  && (_NrStatements <= _Statements.size())))) {
+         || ((_Statements.size() != 0)  && (_NrStatements <= _Statements.size()))))
+    {
         return true;
     }
 
@@ -208,7 +221,8 @@ bool SCPSection8::Works()
 int SCPSection8::setDiagnosticStatements(Statements& stat)
 {
     if ((stat.time.Year > 1000)
-        && (stat.statement.size() > 0)) {
+        && (stat.statement.size() > 0))
+    {
         Empty();
         _Confirmed = (uchar)(stat.confirmed ? 1 : 0);
         _Date = SCPDate(stat.time.Year, stat.time.Month, stat.time.Day);
@@ -216,10 +230,12 @@ int SCPSection8::setDiagnosticStatements(Statements& stat)
         _NrStatements = (uchar) stat.statement.size();
         _Statements.resize(_NrStatements);
 
-        for (int loper = 0; loper < _NrStatements; loper++) {
+        for (int loper = 0; loper < _NrStatements; loper++)
+        {
             _Statements[loper].SequenceNr = (uchar)(loper + 1);
 
-            if (stat.statement[loper].length() > 0) {
+            if (stat.statement[loper].length() > 0)
+            {
                 _Statements[loper].Length = (ushort)(stat.statement[loper].length() + 1);
                 _Statements[loper].Field = new uchar[_Statements[loper].Length];
                 BytesTool::writeString(_Encoding,
@@ -229,7 +245,8 @@ int SCPSection8::setDiagnosticStatements(Statements& stat)
                                        0,
                                        _Statements[loper].Length);
             }
-            else {
+            else
+            {
                 _Statements[loper].Length = 1;
                 _Statements[loper].Field = new uchar[_Statements[loper].Length];
             }

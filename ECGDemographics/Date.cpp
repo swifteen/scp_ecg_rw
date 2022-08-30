@@ -54,14 +54,17 @@ bool Date::isExistingDate()
     // The following check will most likely work for another 7000 years at least.
     if ((Month > 0)
         && (Month <= 12)
-        && (Year > 0)) {
+        && (Year > 0))
+    {
         if ((Month == _LeapMonth)
             && ((Year % 4) == 0)
             && (((Year % 100) != 0)
-                || ((Year % 400)) == 0)) {
+                || ((Year % 400)) == 0))
+        {
             return ((Day > 0) && (Day <= _DaysInLeapMonth));
         }
-        else {
+        else
+        {
             return ((Day > 0) && (Day <= _DaysInMonth[Month]));
         }
     }

@@ -12,7 +12,8 @@ namespace SCP
 class SCPSection0 : public SCPSection
 {
 private:
-    enum {
+    enum
+    {
         kNrMandatory = 12,
     };
 public:

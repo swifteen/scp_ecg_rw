@@ -13,14 +13,18 @@ namespace ECGConversion
 int ECGTool::ChangeMultiplier(short[][] src, double srcmulti, double dstmulti)
 {
     if ((src != null)
-        && (srcmulti == dstmulti)) {
+        && (srcmulti == dstmulti))
+    {
         return 0;
     }
     else if ((src != null)
              && (srcmulti > 0)
-             && (dstmulti > 0)) {
-        for (int loper = 0; loper < src.Length; loper++) {
-            if (ChangeMultiplier(src[loper], srcmulti, dstmulti) != 0) {
+             && (dstmulti > 0))
+    {
+        for (int loper = 0; loper < src.Length; loper++)
+        {
+            if (ChangeMultiplier(src[loper], srcmulti, dstmulti) != 0)
+            {
                 return (0x2 << loper);
             }
         }
@@ -41,16 +45,19 @@ int ECGTool::ChangeMultiplier(short[][] src, double srcmulti, double dstmulti)
 int ECGTool::ChangeMultiplier(short* src, int srcLength, double srcmulti, double dstmulti)
 {
     if ((src != null)
-        && (srcmulti == dstmulti)) {
+        && (srcmulti == dstmulti))
+    {
         return 0;
     }
     else if ((src != null)
              && (srcmulti > 0)
-             && (dstmulti > 0)) {
+             && (dstmulti > 0))
+    {
         short* ps = src;
         short* psend = ps + srcLength;
 
-        while (ps < psend) {
+        while (ps < psend)
+        {
             *ps = (short)((*ps * srcmulti) / dstmulti);
             ps++;
         }

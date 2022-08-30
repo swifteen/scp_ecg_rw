@@ -36,10 +36,12 @@ public:
         Length = (value == null ? (ushort)0 : length);
         Value = null;
 
-        if (Length > 0) {
+        if (Length > 0)
+        {
             Value = new uchar[Length];
 
-            if (Value != null) {
+            if (Value != null)
+            {
                 memcpy(Value, value, length);
             }
         }
@@ -56,8 +58,10 @@ public:
     SCPHeaderField& operator=(const SCPHeaderField& rhs)
     {
         // Prevent self-assignment
-        if (&rhs != this) {
-            if (this->Value != null) {
+        if (&rhs != this)
+        {
+            if (this->Value != null)
+            {
                 delete[] this->Value;
                 this->Value = null;
             }
@@ -70,7 +74,8 @@ public:
 
     ~SCPHeaderField()
     {
-        if (this->Value != null) {
+        if (this->Value != null)
+        {
             delete[] this->Value;
             this->Value = null;
         }
@@ -80,10 +85,12 @@ public:
         this->Tag = rhs.Tag;
         this->Length = rhs.Length;
 
-        if ((rhs.Length > 0) && (rhs.Value != null)) {
+        if ((rhs.Length > 0) && (rhs.Value != null))
+        {
             this->Value = new uchar[rhs.Length];
 
-            if (this->Value != null) {
+            if (this->Value != null)
+            {
                 memcpy(this->Value, rhs.Value, rhs.Length);
             }
         }
@@ -120,7 +127,8 @@ SCPSection1::SCPSection1():
 
 int SCPSection1::_Write(uchar* buffer, int bufferLength, int offset)
 {
-    for (int loper = 0; loper < _NrFields; loper++) {
+    for (int loper = 0; loper < _NrFields; loper++)
+    {
         SCP_PD("loper[%d],Tag[%d],FieldsLength[%d]\n", loper, _Fields[loper].Tag, _Fields[loper].Length);
         BytesTool::writeBytes(_Fields[loper].Tag, buffer, bufferLength, offset, sizeof(_Fields[loper].Tag), true);
         offset += sizeof(_Fields[loper].Tag);
@@ -145,10 +153,12 @@ ushort SCPSection1::getSectionID()
 
 int SCPSection1::_getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         int sum = 0;
 
-        for (int loper = 0; loper < _NrFields; loper++) {
+        for (int loper = 0; loper < _NrFields; loper++)
+        {
             sum += (sizeof(_Fields[loper].Tag) + sizeof(_Fields[loper].Length) + _Fields[loper].Length);
         }
 
@@ -160,13 +170,16 @@ int SCPSection1::_getLength()
 
 bool SCPSection1::Works()
 {
-    if (CheckInstances()) {
-        for (int loper = 0; loper < _NrFields; loper++) {
+    if (CheckInstances())
+    {
+        for (int loper = 0; loper < _NrFields; loper++)
+        {
             if (((_Fields[loper].Value == null) && (_Fields[loper].Length != 0))
                 || ((_Fields[loper].Length > _MaximumFieldLength)
                     && (_Fields[loper].Tag < _ManufactorField)
                     && (!isException(_MaximumLengthExceptions, sizeof(_MaximumLengthExceptions), _Fields[loper].Tag)
-                        || (_Fields[loper].Length > _ExceptionsMaximumLength)))) {
+                        || (_Fields[loper].Length > _ExceptionsMaximumLength))))
+            {
                 SCP_PW("not Works:%d,Tag:%d,Length:%d\n", loper, _Fields[loper].Tag, _Fields[loper].Length);
                 return false;
             }
@@ -174,8 +187,10 @@ bool SCPSection1::Works()
 
         int mustBePresentLength = sizeof(_MustBePresent) / sizeof(_MustBePresent[0]);
 
-        for (int loper = 0; loper < mustBePresentLength; loper++) {
-            if (_SearchField(_MustBePresent[loper]) < 0) {
+        for (int loper = 0; loper < mustBePresentLength; loper++)
+        {
+            if (_SearchField(_MustBePresent[loper]) < 0)
+            {
                 SCP_PW("not Works:%d\n", loper);
                 return false;
             }
@@ -208,16 +223,21 @@ int SCPSection1::Insert(const SCPHeaderField& field)
 {
     if ((field.Tag != _DemographicTerminator)
         && (_NrFields <= _Fields.size())
-        && (_Fields[_NrFields - 1].Tag == _DemographicTerminator)) {
-        if (field.Length > 0) {
+        && (_Fields[_NrFields - 1].Tag == _DemographicTerminator))
+    {
+        if (field.Length > 0)
+        {
             int p1 = _SearchField(field.Tag);
 
             // If field exist must override or can be an multiple instances.
-            if (p1 >= 0) {
+            if (p1 >= 0)
+            {
                 // If multiple instaces field, add field as last of this kind of field.
-                if (isException(_MultipleInstanceFields, sizeof(_MultipleInstanceFields), field.Tag)) {
+                if (isException(_MultipleInstanceFields, sizeof(_MultipleInstanceFields), field.Tag))
+                {
                     // Resize if space is needed.
-                    if (_NrFields == _Fields.size()) {
+                    if (_NrFields == _Fields.size())
+                    {
                         Resize();
                     }
 
@@ -225,28 +245,33 @@ int SCPSection1::Insert(const SCPHeaderField& field)
                     for (; (p1 < _NrFields) && (_Fields[p1].Tag == field.Tag); p1++);
 
                     // Make space in array for field.
-                    for (int loper = _NrFields; loper > p1; loper--) {
+                    for (int loper = _NrFields; loper > p1; loper--)
+                    {
                         _Fields[loper] = _Fields[loper - 1];
                     }
 
                     _Fields[p1] = field;
                     _NrFields++;
                 }
-                else {
+                else
+                {
                     // Overwrite existing field.
                     _Fields[p1] = field;
                 }
             }
-            else {
+            else
+            {
                 // Resize if space is needed
-                if (_NrFields == _Fields.size()) {
+                if (_NrFields == _Fields.size())
+                {
                     Resize();
                 }
 
                 int p2 = _InsertSearch(field.Tag);
 
                 // Make space to insert.
-                for (int loper = _NrFields; loper > p2; loper--) {
+                for (int loper = _NrFields; loper > p2; loper--)
+                {
                     _Fields[loper] = _Fields[loper - 1];
                 }
 
@@ -273,13 +298,16 @@ int SCPSection1::Insert(const SCPHeaderField& field)
 int SCPSection1::Remove(uchar tag)
 {
     if ((tag != _DemographicTerminator)
-        && (_NrFields <= _Fields.size())) {
+        && (_NrFields <= _Fields.size()))
+    {
         int p = _SearchField(tag);
 
-        if (p >= 0) {
+        if (p >= 0)
+        {
             _NrFields--;
 
-            for (; p < _NrFields; p++) {
+            for (; p < _NrFields; p++)
+            {
                 _Fields[p] = _Fields[p + 1];
             }
 
@@ -316,7 +344,8 @@ SCPHeaderField& SCPSection1::GetField(uchar tag)
 
     if ((_Fields != null)
         && (pos >= 0)
-        && (pos < _Fields.size())) {
+        && (pos < _Fields.size()))
+    {
         return _Fields[pos];
     }
 
@@ -335,18 +364,22 @@ int SCPSection1::_SearchField(uchar tag)
     int h = _NrFields - 1;
     int m = (h >> 1);
 
-    while (l <= h && _Fields[m].Tag != tag) {
-        if (tag > _Fields[m].Tag) {
+    while (l <= h && _Fields[m].Tag != tag)
+    {
+        if (tag > _Fields[m].Tag)
+        {
             l = m + 1;
         }
-        else {
+        else
+        {
             h = m - 1;
         }
 
         m = ((l + h) >> 1);
     }
 
-    if ((m >= 0) && (m < _NrFields) && (_Fields[m].Tag == tag)) {
+    if ((m >= 0) && (m < _NrFields) && (_Fields[m].Tag == tag))
+    {
         //      SCP_PD("_SearchField ok tag:%d \n",tag);
         return m;
     }
@@ -363,13 +396,16 @@ int SCPSection1::_InsertSearch(uchar tag)
 {
     int l = 0, h = _NrFields;
 
-    while (l < h) {
+    while (l < h)
+    {
         int m = (l + h) / 2;
 
-        if (_Fields[m].Tag < tag) {
+        if (_Fields[m].Tag < tag)
+        {
             l = m + 1;
         }
-        else {
+        else
+        {
             h = m;
         }
     }
@@ -382,12 +418,15 @@ int SCPSection1::_InsertSearch(uchar tag)
 /// </summary>
 bool SCPSection1::CheckInstances()
 {
-    if ((_NrFields > 0)  && (_NrFields <= _Fields.size())) {
+    if ((_NrFields > 0)  && (_NrFields <= _Fields.size()))
+    {
         uchar prev = _Fields[0].Tag;
 
-        for (int loper = 1; loper < _NrFields; loper++) {
+        for (int loper = 1; loper < _NrFields; loper++)
+        {
             if ((prev == _Fields[loper].Tag)
-                &&  !isException(_MultipleInstanceFields, sizeof(_MultipleInstanceFields), prev)) {
+                &&  !isException(_MultipleInstanceFields, sizeof(_MultipleInstanceFields), prev))
+            {
                 SCP_PE("_Fields:%d\n", loper);
                 return false;
             }
@@ -410,7 +449,8 @@ bool SCPSection1::CheckInstances()
 /// <returns>is exception then true</returns>
 bool SCPSection1::isException(uchar* condition, int conditionLength, uchar tag)
 {
-    if (condition == null) {
+    if (condition == null)
+    {
         SCP_PE("condition is null\n");
         return false;
     }
@@ -419,11 +459,14 @@ bool SCPSection1::isException(uchar* condition, int conditionLength, uchar tag)
     int h = conditionLength - 1;
     int m = (h >> 1);
 
-    while (l <= h && condition[m] != tag) {
-        if (tag > condition[m]) {
+    while (l <= h && condition[m] != tag)
+    {
+        if (tag > condition[m])
+        {
             l = m + 1;
         }
-        else {
+        else
+        {
             h = m - 1;
         }
 
@@ -444,7 +487,8 @@ int SCPSection1::setLanguageSupportCode(const std::string& enc)
     uchar lsc = 0;
 #if 0
 
-    switch (enc.CodePage) {
+    switch (enc.CodePage)
+    {
         case 20127:
             break;//US-ASCII
 
@@ -507,40 +551,52 @@ int SCPSection1::setLanguageSupportCode(const std::string& enc)
 
 #endif
 
-    if (enc.compare("ASCII") == 0) {
+    if (enc.compare("ASCII") == 0)
+    {
         lsc = 0;
     }
-    else if (enc.compare("GB18030") == 0) {
+    else if (enc.compare("GB18030") == 0)
+    {
         lsc = 0x27;
     }
-    else if (enc.compare("ISO−8859−1") == 0) {
+    else if (enc.compare("ISO−8859−1") == 0)
+    {
         lsc = 0x01;
     }
-    else if (enc.compare("ISO−8859−2") == 0) {
+    else if (enc.compare("ISO−8859−2") == 0)
+    {
         lsc = 0x03;
     }
-    else if (enc.compare("ISO−8859−4") == 0) {
+    else if (enc.compare("ISO−8859−4") == 0)
+    {
         lsc = 0x0b;
     }
-    else if (enc.compare("ISO−8859−5") == 0) {
+    else if (enc.compare("ISO−8859−5") == 0)
+    {
         lsc = 0x13;
     }
-    else if (enc.compare("ISO−8859−6") == 0) {
+    else if (enc.compare("ISO−8859−6") == 0)
+    {
         lsc = 0x1b;
     }
-    else if (enc.compare("ISO−8859−7") == 0) {
+    else if (enc.compare("ISO−8859−7") == 0)
+    {
         lsc = 0x23;
     }
-    else if (enc.compare("ISO−8859−8") == 0) {
+    else if (enc.compare("ISO−8859−8") == 0)
+    {
         lsc = 0x2b;
     }
-    else if (enc.compare("ISO−8859−13") == 0) {
+    else if (enc.compare("ISO−8859−13") == 0)
+    {
         lsc = 0x33;
     }
-    else if (enc.compare("ISO−8859−15") == 0) {
+    else if (enc.compare("ISO−8859−15") == 0)
+    {
         lsc = 0x3b;
     }
-    else {
+    else
+    {
         ret = 1;
         SCP_PE("not support LanguageSupportCode[%s]\n", enc.c_str());
     }
@@ -550,10 +606,12 @@ int SCPSection1::setLanguageSupportCode(const std::string& enc)
     if ((p >= 0)
         && (p < _Fields.size())
         && (_Fields[p].Value != null)
-        && (_Fields[p].Length > 16)) {
+        && (_Fields[p].Length > 16))
+    {
         _Fields[p].Value[16] = lsc;
     }
-    else if (ret != 1) {
+    else if (ret != 1)
+    {
         ret = 2;
     }
 
@@ -562,7 +620,8 @@ int SCPSection1::setLanguageSupportCode(const std::string& enc)
     if ((p >= 0)
         && (p < _Fields.size())
         && (_Fields[p].Value != null)
-        && (_Fields[p].Length > 16)) {
+        && (_Fields[p].Length > 16))
+    {
         _Fields[p].Value[16] = lsc;
     }
 
@@ -580,7 +639,8 @@ int SCPSection1::setProtocolCompatibilityLevel(ProtocolCompatibility pc)
 
     if ((p >= 0)
         && (_Fields[p].Value != null)
-        && (_Fields[p].Length > 15)) {
+        && (_Fields[p].Length > 15))
+    {
         _Fields[p].Value[15] = (uchar) pc;
         SCP_PD("ProtocolCompatibilityLevel:%d\n", pc);
         return 0;
@@ -598,7 +658,8 @@ int SCPSection1::setProtocolCompatibilityLevel(ProtocolCompatibility pc)
 /// <returns>0 on success</returns>
 int SCPSection1::setText(uchar tag, const string& text)
 {
-    if (text.length() > 0) {
+    if (text.length() > 0)
+    {
         SCPHeaderField field;
         field.Tag = tag;
         field.Length = (ushort)(text.length() >= _MaximumFieldLength ? _MaximumFieldLength :  text.length() + 1);
@@ -648,7 +709,8 @@ int SCPSection1::setPatientAge(ushort val, AgeDefinition def)
 
 void SCPSection1::setPatientBirthDate(Date& PatientBirthDate)
 {
-    if (PatientBirthDate.isExistingDate()) {
+    if (PatientBirthDate.isExistingDate())
+    {
         SCPHeaderField field;
         field.Tag = 5;
         field.Length = (ushort) SCPDate::Size;
@@ -690,7 +752,8 @@ int SCPSection1::setPatientWeight(ushort val, WeightDefinition def)
 
 void SCPSection1::setGender(Sex Gender)
 {
-    if (Gender != ECGDemographics::kSexNull) {
+    if (Gender != ECGDemographics::kSexNull)
+    {
         SCPHeaderField field;
         field.Tag = 8;
         field.Length = (ushort) sizeof(uchar);
@@ -702,7 +765,8 @@ void SCPSection1::setGender(Sex Gender)
 
 void SCPSection1::setPatientRace(Race PatientRace)
 {
-    if (PatientRace != ECGDemographics::kRaceNull) {
+    if (PatientRace != ECGDemographics::kRaceNull)
+    {
         SCPHeaderField field;
         field.Tag = 9;
         field.Length = (ushort) sizeof(uchar);
@@ -772,7 +836,8 @@ void SCPSection1::setAcqMachineID(const AcquiringDeviceID& id)
     offset += deviceManufactor.length() + 1;
     int ret = Insert(field);
 
-    if (ret == 0) {
+    if (ret == 0)
+    {
         ret = setLanguageSupportCode(_Encoding);
     }
 }
@@ -831,14 +896,16 @@ void SCPSection1::setAnalyzingMachineID(const AcquiringDeviceID& id)
     offset += deviceManufactor.length() + 1;
     int ret = Insert(field);
 
-    if (ret == 0) {
+    if (ret == 0)
+    {
         ret = setLanguageSupportCode(_Encoding);
     }
 }
 
 void SCPSection1::setTimeAcquisition(const DateTime& time)
 {
-    if (time.Year > 1000) {
+    if (time.Year > 1000)
+    {
         SCPHeaderField field;
         field.Tag = 25;
         field.Length = (ushort) SCPDate::Size;
@@ -850,7 +917,8 @@ void SCPSection1::setTimeAcquisition(const DateTime& time)
         scpdate.Write(field.Value, field.Length, 0);
         int ret = Insert(field);
 
-        if (ret != 0) {
+        if (ret != 0)
+        {
             return;
         }
 
@@ -891,7 +959,8 @@ void SCPSection1::setLowpassFilter(ushort LowpassFilter)
 
 void SCPSection1::setFilterBitmap(uchar FilterBitmap)
 {
-    if (FilterBitmap != 0) {
+    if (FilterBitmap != 0)
+    {
         SCPHeaderField field;
         field.Tag = 29;
         field.Length = (ushort) sizeof(FilterBitmap);
@@ -907,8 +976,10 @@ void SCPSection1::setFreeTextFields(const std::vector<string>& FreeTextFields)
 {
     int size = FreeTextFields.size();
 
-    for (int loper = 0; loper < size; loper++) {
-        if (FreeTextFields[loper].length() > 0) {
+    for (int loper = 0; loper < size; loper++)
+    {
+        if (FreeTextFields[loper].length() > 0)
+        {
             SCPHeaderField field;
             field.Tag = 30;
             field.Length = (ushort)(FreeTextFields[loper].length() >= _ExceptionsMaximumLength ?
@@ -963,7 +1034,8 @@ void SCPSection1::setTechnicianDescription(const string&  TechnicianDescription)
 
 void SCPSection1::setSystolicBloodPressure(ushort SystolicBloodPressure)
 {
-    if (SystolicBloodPressure != 0) {
+    if (SystolicBloodPressure != 0)
+    {
         SCPHeaderField field;
         field.Tag = 11;
         field.Length = (uchar) sizeof(SystolicBloodPressure);
@@ -975,7 +1047,8 @@ void SCPSection1::setSystolicBloodPressure(ushort SystolicBloodPressure)
 
 void SCPSection1::setDiastolicBloodPressure(ushort DiastolicBloodPressure)
 {
-    if (DiastolicBloodPressure != 0) {
+    if (DiastolicBloodPressure != 0)
+    {
         SCPHeaderField field;
         field.Tag = 12;
         field.Length = (ushort) sizeof(DiastolicBloodPressure);
@@ -989,7 +1062,8 @@ void SCPSection1::setDrugs(std::vector<Drug>& Drugs)
 {
     int size = Drugs.size();
 
-    for (int loper = 0; loper < size; loper++) {
+    for (int loper = 0; loper < size; loper++)
+    {
         SCPHeaderField field;
         field.Tag = 10;
         field.Length = (ushort)(4 + Drugs[loper].TextDesciption.length()); //TODO 这里字符串的长度是否需要加1
@@ -1006,8 +1080,10 @@ void SCPSection1::setReferralIndication(const std::vector<string>& ReferralIndic
 {
     int size = ReferralIndication.size();
 
-    for (int loper = 0; loper < size; loper++) {
-        if (ReferralIndication[loper].length() > 0) {
+    for (int loper = 0; loper < size; loper++)
+    {
+        if (ReferralIndication[loper].length() > 0)
+        {
             SCPHeaderField field;
             field.Tag = 13;
             field.Length = (ushort)(ReferralIndication[loper].length() >= _ExceptionsMaximumLength ?
@@ -1026,7 +1102,8 @@ void SCPSection1::setRoomDescription(const string& RoomDescription)
 
 void SCPSection1::setStatCode(uchar StatCode)
 {
-    if (StatCode != 0xff) {
+    if (StatCode != 0xff)
+    {
         SCPHeaderField field;
         field.Tag = 24;
         field.Length = (ushort) sizeof(StatCode);

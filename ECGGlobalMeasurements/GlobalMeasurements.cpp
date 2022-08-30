@@ -26,7 +26,8 @@ void GlobalMeasurements::setVentRate(ushort VentRate)
 
 ushort GlobalMeasurements::getVentRate()
 {
-    if (_VentRate < GlobalMeasurement::NoValue) {
+    if (_VentRate < GlobalMeasurement::NoValue)
+    {
         return _VentRate;
     }
 
@@ -35,7 +36,8 @@ ushort GlobalMeasurements::getVentRate()
 
 void GlobalMeasurements::setPdur(ushort Pdur)
 {
-    if (measurment.size() == 0) {
+    if (measurment.size() == 0)
+    {
         measurment.resize(1);
     }
 
@@ -44,7 +46,8 @@ void GlobalMeasurements::setPdur(ushort Pdur)
 
 ushort GlobalMeasurements::getPdur()
 {
-    if (measurment.size() > 0) {
+    if (measurment.size() > 0)
+    {
         return measurment[0].getPdur();
     }
 
@@ -53,7 +56,8 @@ ushort GlobalMeasurements::getPdur()
 
 void GlobalMeasurements::setPRint(ushort PRint)
 {
-    if (measurment.size() == 0) {
+    if (measurment.size() == 0)
+    {
         measurment.resize(1);
     }
 
@@ -62,7 +66,8 @@ void GlobalMeasurements::setPRint(ushort PRint)
 
 ushort GlobalMeasurements::getPRint()
 {
-    if (measurment.size() > 0) {
+    if (measurment.size() > 0)
+    {
         return measurment[0].getPRint();
     }
 
@@ -71,7 +76,8 @@ ushort GlobalMeasurements::getPRint()
 
 void GlobalMeasurements::setQRSdur(ushort QRSdur)
 {
-    if (measurment.size() == 0) {
+    if (measurment.size() == 0)
+    {
         measurment.resize(1);
     }
 
@@ -80,7 +86,8 @@ void GlobalMeasurements::setQRSdur(ushort QRSdur)
 
 ushort GlobalMeasurements::getQRSdur()
 {
-    if (measurment.size() > 0) {
+    if (measurment.size() > 0)
+    {
         return measurment[0].getQRSdur();
     }
 
@@ -89,7 +96,8 @@ ushort GlobalMeasurements::getQRSdur()
 
 void GlobalMeasurements::setQTdur(ushort QTdur)
 {
-    if (measurment.size() == 0) {
+    if (measurment.size() == 0)
+    {
         measurment.resize(1);
     }
 
@@ -98,7 +106,8 @@ void GlobalMeasurements::setQTdur(ushort QTdur)
 
 ushort GlobalMeasurements::getQTdur()
 {
-    if (measurment.size() > 0) {
+    if (measurment.size() > 0)
+    {
         return measurment[0].getQTdur();
     }
 
@@ -107,7 +116,8 @@ ushort GlobalMeasurements::getQTdur()
 
 void GlobalMeasurements::setAxis(short Paxis, short QRSaxis, short Taxis)
 {
-    if (measurment.size() == 0) {
+    if (measurment.size() == 0)
+    {
         measurment.resize(1);
     }
 
@@ -121,12 +131,14 @@ void GlobalMeasurements::setQTc(ushort QTc)
 
 ushort GlobalMeasurements::getQTc()
 {
-    if (_QTc < GlobalMeasurement::NoValue) {
+    if (_QTc < GlobalMeasurement::NoValue)
+    {
         return _QTc;
     }
 
     if ((measurment.size() > 0)
-        && (AvgRR != GlobalMeasurement::NoValue)) {
+        && (AvgRR != GlobalMeasurement::NoValue))
+    {
         return measurment[0].calcQTc(AvgRR, getVentRate(), getQTcType());
     }
 
@@ -135,17 +147,20 @@ ushort GlobalMeasurements::getQTc()
 
 void GlobalMeasurements::setQTcType(GlobalMeasurement::QTcCalcType QTcType)
 {
-    if (QTcType != GlobalMeasurement::QTcCalcTypeUnknown) {
+    if (QTcType != GlobalMeasurement::QTcCalcTypeUnknown)
+    {
         _QTc = (ushort)(GlobalMeasurement::NoValue + QTcType);
     }
-    else if (_QTc >= GlobalMeasurement::NoValue) {
+    else if (_QTc >= GlobalMeasurement::NoValue)
+    {
         _QTc = 0;
     }
 }
 
 GlobalMeasurement::QTcCalcType GlobalMeasurements::getQTcType()
 {
-    if (_QTc >= GlobalMeasurement::NoValue) {
+    if (_QTc >= GlobalMeasurement::NoValue)
+    {
         return (GlobalMeasurement::QTcCalcType)(_QTc - GlobalMeasurement::NoValue);
     }
 
@@ -160,11 +175,13 @@ GlobalMeasurements GlobalMeasurements::Clone()
     ret.AvgPP = AvgPP;
     ret.AvgRR = AvgRR;
 
-    if (measurment.size() != 0) {
+    if (measurment.size() != 0)
+    {
         //  ret.measurment = new GlobalMeasurement[measurment.Length];
         ret.measurment.resize(measurment.size());
 
-        for (int i = 0; i < measurment.size(); i++) {
+        for (int i = 0; i < measurment.size(); i++)
+        {
             //ret.measurment[i] = new GlobalMeasurement();
             ret.measurment[i].Ponset = measurment[i].Ponset;
             ret.measurment[i].Poffset = measurment[i].Poffset;
@@ -177,11 +194,13 @@ GlobalMeasurements GlobalMeasurements::Clone()
         }
     }
 
-    if (spike.size() != 0) {
+    if (spike.size() != 0)
+    {
         // ret.spike = new Spike[spike.Length];
         ret.spike.resize(spike.size());
 
-        for (int i = 0; i < spike.size(); i++) {
+        for (int i = 0; i < spike.size(); i++)
+        {
             //  ret.spike[i] = new Spike();
             ret.spike[i].Amplitude = spike[i].Amplitude;
             ret.spike[i].Time = spike[i].Time;

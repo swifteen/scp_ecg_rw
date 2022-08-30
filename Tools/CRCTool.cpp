@@ -35,7 +35,8 @@ CRCTool::CRCTool()
 
 CRCTool::~CRCTool()
 {
-    if (crctab != null) {
+    if (crctab != null)
+    {
         delete [] crctab;
         crctab = null;
     }
@@ -43,7 +44,8 @@ CRCTool::~CRCTool()
 
 void CRCTool::Init(CRCCode CodingType)
 {
-    switch (CodingType) {
+    switch (CodingType)
+    {
         case CRC_CCITT:
             order = 16;
             direct = 1;
@@ -84,15 +86,18 @@ void CRCTool::Init(CRCCode CodingType)
     ulong bit, crc;
     int i;
 
-    if (direct == 0) {
+    if (direct == 0)
+    {
         crcinit_nondirect = crcinit;
         crc = crcinit;
 
-        for (i = 0; i < order; i++) {
+        for (i = 0; i < order; i++)
+        {
             bit = crc & crchighbit;
             crc <<= 1;
 
-            if (bit != 0) {
+            if (bit != 0)
+            {
                 crc ^= polynom;
             }
         }
@@ -100,20 +105,24 @@ void CRCTool::Init(CRCCode CodingType)
         crc &= crcmask;
         crcinit_direct = crc;
     }
-    else {
+    else
+    {
         crcinit_direct = crcinit;
         crc = crcinit;
 
-        for (i = 0; i < order; i++) {
+        for (i = 0; i < order; i++)
+        {
             bit = crc & 1;
 
-            if (bit != 0) {
+            if (bit != 0)
+            {
                 crc ^= polynom;
             }
 
             crc >>= 1;
 
-            if (bit != 0) {
+            if (bit != 0)
+            {
                 crc |= crchighbit;
             }
         }
@@ -133,23 +142,29 @@ ushort CRCTool::CalcCRCITT(uchar* p, int pLength, int offset, int length)
     uint uiCRCITTSum = 0xFFFF;
     uint uiByteValue;
 
-    if (offset > 0) {
+    if (offset > 0)
+    {
         iBufferIndex = offset;
         length += offset;
     }
 
-    if (length > pLength) {
+    if (length > pLength)
+    {
         length = pLength;
     }
 
-    for (; iBufferIndex < length; iBufferIndex++) {
+    for (; iBufferIndex < length; iBufferIndex++)
+    {
         uiByteValue = ((uint) p[iBufferIndex] << 8);
 
-        for (int iBitIndex = 0; iBitIndex < 8; iBitIndex++) {
-            if (((uiCRCITTSum ^ uiByteValue) & 0x8000) != 0) {
+        for (int iBitIndex = 0; iBitIndex < 8; iBitIndex++)
+        {
+            if (((uiCRCITTSum ^ uiByteValue) & 0x8000) != 0)
+            {
                 uiCRCITTSum = (uiCRCITTSum << 1) ^ 0x1021;
             }
-            else {
+            else
+            {
                 uiCRCITTSum <<= 1;
             }
 
@@ -166,8 +181,10 @@ ulong CRCTool::reflect(ulong crc, int bitnum)
     // reflects the lower 'bitnum' bits of 'crc'
     ulong i, j = 1, crcout = 0;
 
-    for (i = (ulong)1 << (bitnum - 1); i != 0; i >>= 1) {
-        if ((crc & i) != 0) {
+    for (i = (ulong)1 << (bitnum - 1); i != 0; i >>= 1)
+    {
+        if ((crc & i) != 0)
+        {
             crcout |= j;
         }
 
@@ -183,25 +200,30 @@ void CRCTool::generate_crc_table()
     int i, j;
     ulong bit, crc;
 
-    for (i = 0; i < 256; i++) {
+    for (i = 0; i < 256; i++)
+    {
         crc = (ulong)i;
 
-        if (refin != 0) {
+        if (refin != 0)
+        {
             crc = reflect(crc, 8);
         }
 
         crc <<= order - 8;
 
-        for (j = 0; j < 8; j++) {
+        for (j = 0; j < 8; j++)
+        {
             bit = crc & crchighbit;
             crc <<= 1;
 
-            if (bit != 0) {
+            if (bit != 0)
+            {
                 crc ^= polynom;
             }
         }
 
-        if (refin != 0) {
+        if (refin != 0)
+        {
             crc = reflect(crc, order);
         }
 

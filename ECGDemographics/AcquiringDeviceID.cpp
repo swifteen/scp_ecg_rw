@@ -25,7 +25,8 @@ AcquiringDeviceID::AcquiringDeviceID()
 
 AcquiringDeviceID::AcquiringDeviceID(bool bNoDeviceId)
 {
-    if (bNoDeviceId) {
+    if (bNoDeviceId)
+    {
         InstitutionNr = 0;
         DepartmentNr = 11;
         DeviceID = 51;

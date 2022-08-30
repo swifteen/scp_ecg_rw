@@ -13,7 +13,8 @@ namespace   ECGGlobalMeasurements
 class GlobalMeasurement
 {
 public:
-    enum QTcCalcType {
+    enum QTcCalcType
+    {
         QTcCalcTypeUnknown = -1,
         QTcCalcTypeBazett = 0,
         QTcCalcTypeHodges = 1,

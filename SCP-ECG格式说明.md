@@ -45,7 +45,7 @@ SCP-ECG文档中描述存在4种类别实现，区别在于包含的数据存在
 
 ## Section1
 
-![Section1_data_part](W:\zq1219\targetNFS\zq_scp_ecg\SCP-ECG Figure\Section1_data_part.png)
+![Section1_data_part](.\SCP-ECG Figure\Section1_data_part.png)
 
 ## Section2
 

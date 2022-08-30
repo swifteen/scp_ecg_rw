@@ -64,17 +64,20 @@ SCPFormat::~SCPFormat()
 {
     int size = _Default.size();
 
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
+    {
         delete _Default[i];
     }
 }
 
 int SCPFormat::Write(const string& file)
 {
-    if (file.length() > 0) {
+    if (file.length() > 0)
+    {
         FILE* outputFile = fopen(file.c_str(), "wb");
 
-        if (outputFile != null) {
+        if (outputFile != null)
+        {
             // set pointers
             setPointers();
             int fileSize = getFileSize();
@@ -82,7 +85,8 @@ int SCPFormat::Write(const string& file)
             // use write function for byte arrays.
             int err = Write(buffer, fileSize, 0);
 
-            if (err == 0) {
+            if (err == 0)
+            {
                 fwrite(buffer, 1, fileSize, outputFile);
             }
 
@@ -100,25 +104,30 @@ int SCPFormat::Write(const string& file)
 int SCPFormat::Write(uchar* buffer, int bufferLength, int offset)
 {
     // Check if format works.
-    if (Works()) {
+    if (Works())
+    {
         _Length = getFileSize();
         SCPSection0* pointers = dynamic_cast<SCPSection0*>(_Default[0]);
 
         if ((buffer != null)
             && ((offset + _Length) <= bufferLength)
-            && (pointers != null)) {
+            && (pointers != null))
+        {
             // Write length of file.
             BytesTool::writeBytes(_Length, buffer, bufferLength, offset + sizeof(_CRC), sizeof(_Length), true);
 
             // Write all sections in format.
-            for (int loper = 0; loper < pointers->getNrPointers(); loper++) {
-                if (loper < _MinNrSections) {
+            for (int loper = 0; loper < pointers->getNrPointers(); loper++)
+            {
+                if (loper < _MinNrSections)
+                {
                     _Default[loper]->Write(buffer, bufferLength, offset + pointers->getIndex(loper) - 1);
                 }
 
 #if 0 //current not support _Manufactor
                 else if ((pointers.getLength(loper) > SCPSection.Size)
-                         && (_Manufactor[loper - _MinNrSections] != null)) {
+                         && (_Manufactor[loper - _MinNrSections] != null))
+                {
                     _Manufactor[loper - _MinNrSections].Write(buffer, offset + pointers.getIndex(loper) - 1);
                 }
 
@@ -144,10 +153,12 @@ int SCPFormat::getFileSize()
     SCPSection0* pointers = dynamic_cast<SCPSection0*>(_Default[0]);
 
     if (Works()
-        && (pointers != null)) {
+        && (pointers != null))
+    {
         int sum = sizeof(_CRC) + sizeof(_Length);
 
-        for (int loper = 0; loper < pointers->getNrPointers(); loper++) {
+        for (int loper = 0; loper < pointers->getNrPointers(); loper++)
+        {
             sum += pointers->getLength(loper);
         }
 
@@ -161,7 +172,8 @@ IDemographic* SCPFormat::getDemographic()
 {
     SCPSection1* section1 = dynamic_cast<SCPSection1*>(_Default[1]);
 
-    if (section1 != null) {
+    if (section1 != null)
+    {
         return section1;
     }
 
@@ -171,7 +183,8 @@ IDiagnostic* SCPFormat::getDiagnostic()
 {
     SCPSection8* section8 = dynamic_cast<SCPSection8*>(_Default[8]);
 
-    if (section8 != null) {
+    if (section8 != null)
+    {
         return section8;
     }
 
@@ -181,7 +194,8 @@ IGlobalMeasurement* SCPFormat::getGlobalMeasurements()
 {
     SCPSection7* section7 = dynamic_cast<SCPSection7*>(_Default[7]);
 
-    if (section7 != null) {
+    if (section7 != null)
+    {
         return section7;
     }
 
@@ -195,7 +209,8 @@ ILeadMeasurement* SCPFormat::getLeadMeasurements()
 {
     SCPSection10* section10 = dynamic_cast<SCPSection10*>(_Default[10]);
 
-    if (section10 != null) {
+    if (section10 != null)
+    {
         return section10;
     }
 
@@ -208,9 +223,12 @@ bool SCPFormat::Works()
 
     if ((_Default.size() == _MinNrSections)
         && (pointers != null)
-        && (_MinNrSections /* + (_Manufactor != null ? _Manufactor.Length : 0) */) == pointers->getNrPointers()) {
-        for (int loper = 0; loper < _MinNrWorkingSections; loper++) {
-            if (_Default[loper] == null) {
+        && (_MinNrSections /* + (_Manufactor != null ? _Manufactor.Length : 0) */) == pointers->getNrPointers())
+    {
+        for (int loper = 0; loper < _MinNrWorkingSections; loper++)
+        {
+            if (_Default[loper] == null)
+            {
                 return false;
             }
         }
@@ -230,12 +248,15 @@ int SCPFormat::setSignals(Signals& signals)
 {
     int NrLeads = signals.getNrLeads();
 
-    if (NrLeads > 0) {
+    if (NrLeads > 0)
+    {
         SCPSection2* section2 = dynamic_cast<SCPSection2*>(_Default[2]);
 
-        if (section2 != null) {
+        if (section2 != null)
+        {
             // Decide wich encoding to use.
-            switch (_EncodingType) {
+            switch (_EncodingType)
+            {
                 case EncodingTypeNone:
                     section2->UseNoHuffman();
                     break;
@@ -254,20 +275,23 @@ int SCPFormat::setSignals(Signals& signals)
 
         SCPSection3* section3 = dynamic_cast<SCPSection3*>(_Default[3]);
 
-        if ((section3 == null) || (section3->setSignals(signals) != 0)) {
+        if ((section3 == null) || (section3->setSignals(signals) != 0))
+        {
             return 2;
         }
 
         SCPSection5* section5 = dynamic_cast<SCPSection5*>(_Default[5]);
 
-        if (section5 != null) {
+        if (section5 != null)
+        {
             section5->setAVM(signals.MedianAVM);
             section5->setSamplesPerSecond(signals.MedianSamplesPerSecond);
         }
 
         SCPSection6* section6 = dynamic_cast<SCPSection6*>(_Default[6]);
 
-        if (section6 != null) {
+        if (section6 != null)
+        {
             section6->setAVM(signals.RhythmAVM);
             section6->setSamplesPerSecond(signals.RhythmSamplesPerSecond);
         }
@@ -278,8 +302,10 @@ int SCPFormat::setSignals(Signals& signals)
         rhythmDataLength.resize(NrLeads);
 
         //        short[][] medianData = new short[signals.NrLeads][];
-        for (int loper = 0; loper < NrLeads; loper++) {
-            if (signals[loper].Rhythm == null) {
+        for (int loper = 0; loper < NrLeads; loper++)
+        {
+            if (signals[loper].Rhythm == null)
+            {
                 return 4;
             }
 
@@ -288,10 +314,12 @@ int SCPFormat::setSignals(Signals& signals)
 #if 0//current only support rhythm data
 
             if ((medianData == null)
-                || (signals[loper].Median == null)) {
+                || (signals[loper].Median == null))
+            {
                 medianData = null;
             }
-            else {
+            else
+            {
                 medianData[loper] = signals[loper].Median;
             }
 
@@ -300,25 +328,32 @@ int SCPFormat::setSignals(Signals& signals)
 
 #if 0 //current only support rhythm data
 
-        if (medianData != null) {
-            if (((ISignal)_Default[4]).setSignals(signals) != 0) {
+        if (medianData != null)
+        {
+            if (((ISignal)_Default[4]).setSignals(signals) != 0)
+            {
                 return 8;
             }
 
-            if (signals.MedianSamplesPerSecond < signals.RhythmSamplesPerSecond) {
+            if (signals.MedianSamplesPerSecond < signals.RhythmSamplesPerSecond)
+            {
                 median.setSamplesPerSecond(signals.RhythmSamplesPerSecond);
                 ECGTool.ResampleSignal(medianData, signals.MedianSamplesPerSecond, signals.RhythmSamplesPerSecond, out medianData);
             }
 
-            if (median.EncodeData(medianData, (SCPSection2) _Default[2], (ushort)((signals.MedianLength * signals.MedianSamplesPerSecond) / 1000), (_EncodingType == EncodingType.None ? (byte)0 : _DifferenceDataSection5Used)) != 0) {
+            if (median.EncodeData(medianData, (SCPSection2) _Default[2], (ushort)((signals.MedianLength * signals.MedianSamplesPerSecond) / 1000), (_EncodingType == EncodingType.None ? (byte)0 : _DifferenceDataSection5Used)) != 0)
+            {
                 return 16;
             }
 
-            if (signals.QRSZone != null) {
-                if (signals.RhythmAVM <= signals.MedianAVM) {
+            if (signals.QRSZone != null)
+            {
+                if (signals.RhythmAVM <= signals.MedianAVM)
+                {
                     ECGTool.ChangeMultiplier(medianData, signals.MedianAVM, signals.RhythmAVM);
                 }
-                else {
+                else
+                {
                     ECGTool.ChangeMultiplier(rhythmData, signals.RhythmAVM, signals.MedianAVM);
                     rhythm.setAVM(signals.MedianAVM);
                 }
@@ -327,7 +362,8 @@ int SCPFormat::setSignals(Signals& signals)
             ECGTool.ResampleSignal(rhythmData, signals.RhythmSamplesPerSecond, median.getSamplesPerSecond(), out rhythmData);
 
             if (_QRSSubtractionSupport
-                && (signals.QRSZone != null)) {
+                && (signals.QRSZone != null))
+            {
                 ((SCPSection3) _Default[3]).setMediansUsed(true);
                 ((SCPSection4) _Default[4]).SubtractMedians((SCPSection3) _Default[3], rhythmData, medianData);
             }
@@ -336,7 +372,8 @@ int SCPFormat::setSignals(Signals& signals)
         if (_BimodalCompressionUsed
             && (_BimodalCompressionRate > 0)
             && (medianData != null)
-            && (signals.QRSZone != null)) {
+            && (signals.QRSZone != null))
+        {
             // Bimodal Compression must be set in set section 6.
             rhythm.setBimodal(true);
             rhythm.setSamplesPerSecond(signals.MedianSamplesPerSecond / _BimodalCompressionRate);
@@ -357,7 +394,8 @@ int SCPFormat::setSignals(Signals& signals)
                                      section3,
                                      section4,
                                      signals.MedianSamplesPerSecond,
-                                     (_EncodingType == EncodingTypeNone ? (uchar)0 : _DifferenceDataSection6Used)) != 0)) {
+                                     (_EncodingType == EncodingTypeNone ? (uchar)0 : _DifferenceDataSection6Used)) != 0))
+        {
             return 32;
         }
 
@@ -374,11 +412,13 @@ void SCPFormat::setPointers()
 {
     SCPSection0* pointers = dynamic_cast<SCPSection0*>(_Default[0]);
 
-    if (pointers != null) {
+    if (pointers != null)
+    {
         pointers->setNrPointers(_MinNrSections /* + (_Manufactor != null ? _Manufactor.Length : 0) */);
         int sum = sizeof(_CRC) + sizeof(_Length) + 1;
 
-        for (int loper = 0; loper < _MinNrSections; loper++) {
+        for (int loper = 0; loper < _MinNrSections; loper++)
+        {
             ushort id = (ushort) loper;
             int length = _Default[loper]->getLength();
             int index = (length > SCPSection::Size ? sum : 0);
@@ -388,8 +428,10 @@ void SCPFormat::setPointers()
 
 #if 0
 
-        if (_Manufactor != null) {
-            for (int loper = 0; loper < _Manufactor.Length; loper++) {
+        if (_Manufactor != null)
+        {
+            for (int loper = 0; loper < _Manufactor.Length; loper++)
+            {
                 ushort id = _Manufactor[loper].getSectionID();
                 int length = _Manufactor[loper].getLength();
                 int index = (length > SCPSection.Size ? sum : 0);
@@ -405,7 +447,8 @@ void SCPFormat::setPointers()
         // Determine file Protocol Compatibility Level.
         if (pointers->Works()
             && (section1 != null)
-            && (section1->Works())) {
+            && (section1->Works()))
+        {
             SCPSection2* section2 = dynamic_cast<SCPSection2*>(_Default[2]);
             SCPSection3* section3 = dynamic_cast<SCPSection3*>(_Default[3]);
             SCPSection7* section7 = dynamic_cast<SCPSection7*>(_Default[7]);
@@ -414,7 +457,8 @@ void SCPFormat::setPointers()
             if ((section2 != null)
                 && (section2->Works())
                 && (section3 != null)
-                && (section3->Works())) {
+                && (section3->Works()))
+            {
                 SCPSection4* section4 = dynamic_cast<SCPSection4*>(_Default[4]);
                 SCPSection5* section5 = dynamic_cast<SCPSection5*>(_Default[5]);
                 SCPSection6* section6 = dynamic_cast<SCPSection6*>(_Default[6]);
@@ -424,28 +468,33 @@ void SCPFormat::setPointers()
                     && (section5 != null)
                     && (section5->Works())
                     && (section6 != null)
-                    && (section6->Works())) {
+                    && (section6->Works()))
+                {
                     section1->setProtocolCompatibilityLevel(SCPSection1::kProtocolCompatibilityCatIV);
                 }
                 else if ((section5 != null)
-                         && (section5->Works())) {
+                         && (section5->Works()))
+                {
                     section1->setProtocolCompatibilityLevel(SCPSection1::kProtocolCompatibilityCatIII);
                 }
                 else if ((section6 != null)
-                         && (section6->Works())) {
+                         && (section6->Works()))
+                {
                     section1->setProtocolCompatibilityLevel(SCPSection1::kProtocolCompatibilityCatII);
                 }
                 else if ((section7 != null)
                          && (section7->Works())
                          && (section8 != null)
-                         && (section8->Works())) {
+                         && (section8->Works()))
+                {
                     section1->setProtocolCompatibilityLevel(SCPSection1::kProtocolCompatibilityCatI);
                 }
             }
             else if ((section7 != null)
                      && (section7->Works())
                      && (section8 != null)
-                     && (section8->Works())) {
+                     && (section8->Works()))
+            {
                 section1->setProtocolCompatibilityLevel(SCPSection1::kProtocolCompatibilityCatI);
             }
         }
@@ -456,7 +505,8 @@ void SCPFormat::setPointers()
 /// </summary>
 void SCPFormat::EmptyFormat()
 {
-    for (int loper = 0; loper < _MinNrSections; loper++) {
+    for (int loper = 0; loper < _MinNrSections; loper++)
+    {
         _Default[loper]->Empty();
     }
 
@@ -470,9 +520,12 @@ void SCPFormat::Dispose()
     _CRC = 0;
     _Length = 0;
 
-    if (_Default.size() > 0) {
-        for (int loper = 0; loper < _Default.size(); loper++) {
-            if (_Default[loper] != null) {
+    if (_Default.size() > 0)
+    {
+        for (int loper = 0; loper < _Default.size(); loper++)
+        {
+            if (_Default[loper] != null)
+            {
                 _Default[loper]->Empty();
                 _Default[loper] = null;
             }

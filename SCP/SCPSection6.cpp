@@ -32,7 +32,8 @@ SCPSection6::SCPSection6()
     _Data.clear();
     int size = _Data.size();
 
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
+    {
         _Data[i] = null;
     }
 }
@@ -41,8 +42,10 @@ SCPSection6::~SCPSection6()
 {
     int size = _Data.size();
 
-    for (int i = 0; i < size; i++) {
-        if (_Data[i] != null) {
+    for (int i = 0; i < size; i++)
+    {
+        if (_Data[i] != null)
+        {
             delete [] _Data[i];
             _Data[i] = null;
         }
@@ -61,7 +64,8 @@ int SCPSection6::_Write(uchar* buffer, int bufferLength, int offset)
     offset += sizeof(_Bimodal);
     int offset2 = offset + (_Data.size() * sizeof(_DataLength[0]));
 
-    for (int loper = 0; loper < _Data.size(); loper++) {
+    for (int loper = 0; loper < _Data.size(); loper++)
+    {
         BytesTool::writeBytes(_DataLength[loper], buffer, bufferLength, offset, sizeof(_DataLength[loper]), true);
         offset += sizeof(_DataLength[loper]);
         BytesTool::copy(buffer, bufferLength, offset2, _Data[loper], _DataRealLength[loper], 0, _DataRealLength[loper]);
@@ -82,11 +86,13 @@ void SCPSection6::_Empty()
 }
 int SCPSection6::_getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         int sum = sizeof(_AVM) + sizeof(_TimeInterval) + sizeof(_Difference) + sizeof(_Bimodal);
         sum += (_Data.size() * sizeof(_DataLength[0]));
 
-        for (int loper = 0; loper < _Data.size(); loper++) {
+        for (int loper = 0; loper < _Data.size(); loper++)
+        {
             sum += _DataLength[loper];
         }
 
@@ -103,10 +109,13 @@ bool SCPSection6::Works()
 {
     if ((_Data.size() > 0)
         && (_DataLength.size() > 0)
-        && (_Data.size() == _DataLength.size())) {
-        for (int loper = 0; loper < _Data.size(); loper++) {
+        && (_Data.size() == _DataLength.size()))
+    {
+        for (int loper = 0; loper < _Data.size(); loper++)
+        {
             if ((_Data[loper] == null)
-                || (_DataLength[loper] < _DataRealLength[loper])) {
+                || (_DataLength[loper] < _DataRealLength[loper]))
+            {
                 return false;
             }
         }
@@ -145,21 +154,25 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
     if ((data.size() > 0)
         && (tables != null)
         && (leadDefinition != null)
-        && (localFreq > 0)) {
+        && (localFreq > 0))
+    {
         if ((medianFreq <= 0)
-            || (medianFreq == localFreq)) {
+            || (medianFreq == localFreq))
+        {
             medianFreq = 1;
             localFreq = 1;
         }
 
         if ((_Bimodal == 0x1)
-            && (qrsLocations == null)) {
+            && (qrsLocations == null))
+        {
             return 2;
         }
 
         ushort nrleads = leadDefinition->getNrLeads();
 
-        if ((nrleads != data.size()) || (nrleads != dataLength.size())) {
+        if ((nrleads != data.size()) || (nrleads != dataLength.size()))
+        {
             return 8;
         }
 
@@ -167,8 +180,10 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
         _DataLength.resize(nrleads);
         _DataRealLength.resize(nrleads);
 
-        for (int loper = 0; loper < nrleads; loper++) {
-            if (data[loper] == null) {
+        for (int loper = 0; loper < nrleads; loper++)
+        {
+            if (data[loper] == null)
+            {
                 return 4;
             }
 
@@ -177,19 +192,22 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
             int time = (leadDefinition->getLeadLength(loper) * localFreq) / medianFreq;
 #if 0
 
-            if (localFreq != medianFreq) {
+            if (localFreq != medianFreq)
+            {
                 int rate = (medianFreq / localFreq);
 
                 // Bimodal part might be buggy unable to test.
                 if ((_Bimodal == 0x1)
                     && ((medianFreq % localFreq) == 0)
                     && (rate > 0)
-                    && (rate < 5)) {
+                    && (rate < 5))
+                {
                     // Calculate nr of samples stored in section.
                     time = 0;
                     int nrzones = qrsLocations.getNrProtectedZones();
 
-                    for (int zone = 0; zone < nrzones; zone++) {
+                    for (int zone = 0; zone < nrzones; zone++)
+                    {
                         int begin = (qrsLocations.getProtectedStart(zone) >= leadDefinition.getLeadStart(loper) ? qrsLocations.getProtectedStart(zone) : leadDefinition.getLeadStart(loper));
                         int end = (qrsLocations.getProtectedEnd(zone) <= leadDefinition.getLeadEnd(loper) ? qrsLocations.getProtectedEnd(zone) : leadDefinition.getLeadEnd(loper));
                         begin = (end > begin ? end - begin + 1 : 0);
@@ -207,25 +225,31 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
 
                     while ((time1 < temp.Length)
                            && (time2 <= leadLength)
-                           && (time2 < data[loper].Length)) {
+                           && (time2 < data[loper].Length))
+                    {
                         int zone = 0;
                         int end = qrsLocations.getNrProtectedZones();
 
-                        for (; zone < end; zone++) {
+                        for (; zone < end; zone++)
+                        {
                             if ((qrsLocations.getProtectedLength(zone) > 0)
                                 && (time2 + time2Offset >= qrsLocations.getProtectedStart(zone))
-                                && (time2 + time2Offset <= qrsLocations.getProtectedEnd(zone))) {
+                                && (time2 + time2Offset <= qrsLocations.getProtectedEnd(zone)))
+                            {
                                 break;
                             }
                         }
 
-                        if (zone < end) {
+                        if (zone < end)
+                        {
                             temp[time1] = data[loper][time2++];
                         }
-                        else {
+                        else
+                        {
                             int Sum = 0;
 
-                            for (int sumLoper = 0; sumLoper < rate; sumLoper++) {
+                            for (int sumLoper = 0; sumLoper < rate; sumLoper++)
+                            {
                                 Sum += data[loper][time2 + sumLoper];
                             }
 
@@ -236,7 +260,8 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
                         time1++;
                     }
                 }
-                else {
+                else
+                {
                     _Bimodal = 0;
                     ECGTool.ResampleLead(temp, medianFreq, localFreq, out temp);
                 }
@@ -247,7 +272,8 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
             int encodeLength = 0;
             _Data[loper] = tables->Encode(temp, dataSingleLength, time, 0, _Difference, &encodeLength);
 
-            if ((_Data[loper] == null) || (0 == encodeLength)) {
+            if ((_Data[loper] == null) || (0 == encodeLength))
+            {
                 _Data.clear();
                 _DataLength.clear();
                 return 8;
@@ -256,7 +282,8 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
             _DataLength[loper] = (ushort) encodeLength;
             _DataRealLength[loper] = (ushort) encodeLength;
 
-            if ((_DataLength[loper] & 0x1) == 0x1) {
+            if ((_DataLength[loper] & 0x1) == 0x1)
+            {
                 _DataLength[loper]++;
             }
         }
@@ -272,7 +299,8 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
 /// <returns>AVM in uV</returns>
 double SCPSection6::getAVM()
 {
-    if (_AVM > 0) {
+    if (_AVM > 0)
+    {
         return (((double)_AVM) / 1000.0);
     }
 
@@ -284,7 +312,8 @@ double SCPSection6::getAVM()
 /// <param name="avm">AVM in uV</param>
 void  SCPSection6::setAVM(double avm)
 {
-    if (avm > 0) {
+    if (avm > 0)
+    {
         _AVM  = (ushort)(avm * 1000);
     }
 }
@@ -294,7 +323,8 @@ void  SCPSection6::setAVM(double avm)
 /// <returns>samples per second</returns>
 int SCPSection6::getSamplesPerSecond()
 {
-    if (_TimeInterval > 0) {
+    if (_TimeInterval > 0)
+    {
         return (1000000 / _TimeInterval);
     }
 
@@ -306,7 +336,8 @@ int SCPSection6::getSamplesPerSecond()
 /// <param name="sps">samples per second</param>
 void SCPSection6::setSamplesPerSecond(int sps)
 {
-    if (sps > 0) {
+    if (sps > 0)
+    {
         _TimeInterval = (ushort)(1000000 / sps);
     }
 }

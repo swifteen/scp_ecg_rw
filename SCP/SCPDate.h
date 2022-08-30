@@ -21,7 +21,8 @@ public:
     SCPDate& operator=(const SCPDate& date)
     {
         // Prevent self-assignment
-        if (&date != this) {
+        if (&date != this)
+        {
             this->Year  = date.Year;
             this->Month = date.Month;
             this->Day   = date.Day;

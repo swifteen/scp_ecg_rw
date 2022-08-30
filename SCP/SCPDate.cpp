@@ -43,7 +43,8 @@ SCPDate::SCPDate(int year, int month, int day)
 /// <returns></returns>
 int SCPDate::Write(uchar* buffer, int bufferLength, int offset)
 {
-    if ((offset + Size) > bufferLength) {
+    if ((offset + Size) > bufferLength)
+    {
         return 0x1;
     }
 

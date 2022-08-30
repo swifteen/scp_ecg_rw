@@ -30,7 +30,8 @@ SCPSection5::SCPSection5()
     _DataRealLength.clear();
     int size = _Data.size();
 
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
+    {
         _Data[i] = null;
     }
 }
@@ -39,8 +40,10 @@ SCPSection5::~SCPSection5()
 {
     int size = _Data.size();
 
-    for (int i = 0; i < size; i++) {
-        if (_Data[i] != null) {
+    for (int i = 0; i < size; i++)
+    {
+        if (_Data[i] != null)
+        {
             delete [] _Data[i];
             _Data[i] = null;
         }
@@ -59,7 +62,8 @@ int SCPSection5::_Write(uchar* buffer, int bufferLength, int offset)
     offset += sizeof(_Reserved);
     int offset2 = offset + (_Data.size() * sizeof(_DataLength[0]));
 
-    for (int loper = 0; loper < _Data.size(); loper++) {
+    for (int loper = 0; loper < _Data.size(); loper++)
+    {
         BytesTool::writeBytes(_DataLength[loper],
                               buffer,
                               bufferLength,
@@ -91,11 +95,13 @@ void SCPSection5::_Empty()
 }
 int SCPSection5::_getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         int sum = sizeof(_AVM) + sizeof(_TimeInterval) + sizeof(_Difference) + sizeof(_Reserved);
         sum += (_Data.size() * sizeof(_DataLength[0]));
 
-        for (int loper = 0; loper < _Data.size(); loper++) {
+        for (int loper = 0; loper < _Data.size(); loper++)
+        {
             sum += _DataLength[loper];
         }
 
@@ -111,10 +117,13 @@ ushort SCPSection5::getSectionID()
 bool SCPSection5::Works()
 {
     if ((_Data.size() == _DataLength.size())
-        && (_Data.size() > 0)) {
-        for (int loper = 0; loper < _Data.size(); loper++) {
+        && (_Data.size() > 0))
+    {
+        for (int loper = 0; loper < _Data.size(); loper++)
+        {
             if ((_Data[loper] == null)
-                || (_DataLength[loper] < _DataRealLength[loper])) {
+                || (_DataLength[loper] < _DataRealLength[loper]))
+            {
                 return false;
             }
         }
@@ -150,13 +159,16 @@ int SCPSection5::EncodeData(short* dataArray,
                             uchar difference)
 {
     if ((tables != null)
-        && (dataArray != null)) {
+        && (dataArray != null))
+    {
         _Data.resize(nrleads);
         _DataLength.resize(nrleads);
         _DataRealLength.resize(nrleads);
 
-        for (int loper = 0; loper < nrleads; loper++) {
-            if (dataArray + loper * dataSingleLength == null) {
+        for (int loper = 0; loper < nrleads; loper++)
+        {
+            if (dataArray + loper * dataSingleLength == null)
+            {
                 return 2;
             }
 
@@ -169,7 +181,8 @@ int SCPSection5::EncodeData(short* dataArray,
                                           _Difference,
                                           &encodeLength);
 
-            if ((_Data[loper] == null) || (0 == encodeLength)) {
+            if ((_Data[loper] == null) || (0 == encodeLength))
+            {
                 _Data.clear();
                 _DataLength.clear();
                 return 4;
@@ -177,7 +190,8 @@ int SCPSection5::EncodeData(short* dataArray,
 
             _DataLength[loper] = (ushort) encodeLength;
 
-            if ((_DataLength[loper] & 0x1) == 0x1) {
+            if ((_DataLength[loper] & 0x1) == 0x1)
+            {
                 _DataLength[loper]++;
             }
         }
@@ -194,7 +208,8 @@ int SCPSection5::EncodeData(short* dataArray,
 /// <returns>AVM in uV</returns>
 double SCPSection5::getAVM()
 {
-    if (_AVM > 0) {
+    if (_AVM > 0)
+    {
         return (((double)_AVM) / 1000.0);
     }
 
@@ -206,7 +221,8 @@ double SCPSection5::getAVM()
 /// <param name="avm">AVM in uV</param>
 void SCPSection5::setAVM(double avm)
 {
-    if (avm > 0) {
+    if (avm > 0)
+    {
         _AVM  = (ushort)(avm * 1000);
     }
 }
@@ -216,7 +232,8 @@ void SCPSection5::setAVM(double avm)
 /// <returns>samples per second</returns>
 int SCPSection5::getSamplesPerSecond()
 {
-    if (_TimeInterval > 0) {
+    if (_TimeInterval > 0)
+    {
         return (1000000 / _TimeInterval);
     }
 
@@ -228,7 +245,8 @@ int SCPSection5::getSamplesPerSecond()
 /// <param name="sps">samples per second</param>
 void SCPSection5::setSamplesPerSecond(int sps)
 {
-    if (sps > 0) {
+    if (sps > 0)
+    {
         _TimeInterval = (ushort)(1000000 / sps);
     }
 }

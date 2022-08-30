@@ -37,7 +37,8 @@ uchar Signals::getNrLeads()
 void Signals::setNrLeads(uchar NrLeads)
 {
     if ((NrLeads < uchar_MIN)
-        || (NrLeads > uchar_MAX)) {
+        || (NrLeads > uchar_MAX))
+    {
         return;
     }
 
@@ -51,7 +52,8 @@ vector<Signal>& Signals::getLeads()
 
 void Signals::setLeads(const vector<Signal>& leads)
 {
-    if (leads.size() > uchar_MAX) {
+    if (leads.size() > uchar_MAX)
+    {
         return;
     }
 
@@ -82,13 +84,17 @@ void Signals::CalculateStartAndEnd(int& nStart, int& nEnd)
     nStart = uint_MAX;
     nEnd = uint_MIN;
 
-    if (_Lead.size() != 0) {
-        for (int nLead = 0; nLead < _Lead.size(); nLead++) {
-            if (_Lead[nLead].RhythmStart < nStart) {
+    if (_Lead.size() != 0)
+    {
+        for (int nLead = 0; nLead < _Lead.size(); nLead++)
+        {
+            if (_Lead[nLead].RhythmStart < nStart)
+            {
                 nStart = _Lead[nLead].RhythmStart;
             }
 
-            if (_Lead[nLead].RhythmEnd > nEnd) {
+            if (_Lead[nLead].RhythmEnd > nEnd)
+            {
                 nEnd = _Lead[nLead].RhythmEnd;
             }
         }
@@ -137,18 +143,22 @@ virtual Signals Signals::Clone()
     sigs.MedianSamplesPerSecond = MedianSamplesPerSecond;
     sigs.MedianFiducialPoint = MedianFiducialPoint;
 
-    if (qRSZone.size() != 0) {
+    if (qRSZone.size() != 0)
+    {
         sigs.qRSZone.resize(qRSZone.size());
 
-        for (int i = 0; i < sigs.qRSZone.size(); i++) {
+        for (int i = 0; i < sigs.qRSZone.size(); i++)
+        {
             sigs.qRSZone[i] = qRSZone[i].Clone();
         }
     }
 
-    if (_Lead.size() != 0) {
+    if (_Lead.size() != 0)
+    {
         sigs.NrLeads = NrLeads;
 
-        for (int i = 0; i < sigs._Lead.size(); i++) {
+        for (int i = 0; i < sigs._Lead.size(); i++)
+        {
             sigs._Lead[i] = _Lead[i].Clone();
         }
     }
@@ -170,7 +180,8 @@ Signals Signals::GetCopy()
     sigs.MedianSamplesPerSecond = MedianSamplesPerSecond;
     sigs.MedianFiducialPoint = MedianFiducialPoint;
 
-    if (qrsZone.size() != 0) {
+    if (qrsZone.size() != 0)
+    {
         //sigs.qrsZone = new QRSZone[qrsZone.size()];
         sigs.qrsZone.resize(qrsZone.size());
 
@@ -179,7 +190,8 @@ Signals Signals::GetCopy()
         sigs.qrsZone[i] = qrsZone[i].Clone();
     }
 
-    if (_Lead.size() != 0) {
+    if (_Lead.size() != 0)
+    {
         sigs.NrLeads = NrLeads;
 
         for (int i = 0; i < sigs._Lead.size(); i++);
@@ -196,10 +208,12 @@ Signals Signals::GetCopy()
 /// <param name="samplesPerSecond">samples per second to resample towards</param>
 void Signals::Resample(int samplesPerSecond)
 {
-    foreach (Signal sig in this._Lead) {
+    foreach (Signal sig in this._Lead)
+    {
         if ((this.RhythmSamplesPerSecond != 0)
             && (this.RhythmAVM != 0)
-            && (sig.Rhythm != null)) {
+            && (sig.Rhythm != null))
+        {
             ECGTool.ResampleLead(sig.Rhythm, this.RhythmSamplesPerSecond, samplesPerSecond, out sig.Rhythm);
             sig.RhythmStart = (int)(((long)sig.RhythmStart * (long)samplesPerSecond) / (long)this.RhythmSamplesPerSecond);
             sig.RhythmEnd = (int)(((long)sig.RhythmEnd * (long)samplesPerSecond) / (long)this.RhythmSamplesPerSecond);
@@ -207,13 +221,16 @@ void Signals::Resample(int samplesPerSecond)
 
         if ((this.MedianSamplesPerSecond != 0)
             && (this.MedianAVM != 0)
-            && (sig.Median != null)) {
+            && (sig.Median != null))
+        {
             ECGTool.ResampleLead(sig.Median, this.MedianSamplesPerSecond, samplesPerSecond, out sig.Median);
         }
     }
 
-    if (this.QRSZone != null) {
-        foreach (QRSZone zone in this.QRSZone) {
+    if (this.QRSZone != null)
+    {
+        foreach (QRSZone zone in this.QRSZone)
+        {
             zone.Start = (int)(((long)zone.Start * (long)samplesPerSecond) / (long)this.MedianSamplesPerSecond);
             zone.Fiducial = (int)(((long)zone.Fiducial * (long)samplesPerSecond) / (long)this.MedianSamplesPerSecond);
             zone.End = (int)(((long)zone.End * (long)samplesPerSecond) / (long)this.MedianSamplesPerSecond);
@@ -221,12 +238,14 @@ void Signals::Resample(int samplesPerSecond)
     }
 
     if ((this.RhythmSamplesPerSecond != 0)
-        && (this.RhythmAVM != 0)) {
+        && (this.RhythmAVM != 0))
+    {
         this.RhythmSamplesPerSecond = samplesPerSecond;
     }
 
     if ((this.MedianSamplesPerSecond != 0)
-        && (this.MedianAVM != 0)) {
+        && (this.MedianAVM != 0))
+    {
         this.MedianFiducialPoint = (ushort)(((long)this.MedianFiducialPoint * (long)samplesPerSecond) / (long)this.MedianSamplesPerSecond);
         this.MedianSamplesPerSecond = samplesPerSecond;
     }
@@ -239,19 +258,23 @@ void Signals::Resample(int samplesPerSecond)
 /// <param name="avm">preferred multiplier</param>
 void Signals::SetAVM(double avm)
 {
-    if (avm != 0.0) {
+    if (avm != 0.0)
+    {
         int nrLeads = NrLeads;
 
-        for (int i = 0; i < nrLeads; i++) {
+        for (int i = 0; i < nrLeads; i++)
+        {
             ECGTool::ChangeMultiplier(_Lead[i].Rhythm, _Lead[i].RhythmLength, RhythmAVM, avm);
             //ECGTool.ChangeMultiplier(this[i].Median, this.MedianAVM, avm);
         }
 
-        if (RhythmAVM != 0.0) {
+        if (RhythmAVM != 0.0)
+        {
             RhythmAVM = avm;
         }
 
-        if (MedianAVM != 0.0) {
+        if (MedianAVM != 0.0)
+        {
             MedianAVM = avm;
         }
     }

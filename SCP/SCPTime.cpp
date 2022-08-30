@@ -39,7 +39,8 @@ SCPTime::SCPTime(int hour, int min, int sec)
 /// <returns>0 on success</returns>
 int SCPTime::Write(uchar* buffer, int bufferLength, int offset)
 {
-    if ((offset + Size) > bufferLength) {
+    if ((offset + Size) > bufferLength)
+    {
         return 0x1;
     }
 

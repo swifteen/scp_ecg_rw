@@ -9,7 +9,8 @@ using namespace ECGConversion::ECGLeadMeasurements;
 static int DemographicCopy(IDemographic* dst)
 {
     // Check for correct input.
-    if (dst == null) {
+    if (dst == null)
+    {
         return 1;
     }
 
@@ -22,13 +23,15 @@ static int DemographicCopy(IDemographic* dst)
 #if 0
     dst->setPrefixName("src.PrefixName");
 
-    if (dst->setPrefixName == null) {
+    if (dst->setPrefixName == null)
+    {
         err |= (0x1 << 29);
     }
 
     dst->setSuffixName()src.SuffixName;
 
-    if (dst->setSuffixName == null) {
+    if (dst->setSuffixName == null)
+    {
         err |= (0x1 << 30);
     }
 
@@ -36,7 +39,8 @@ static int DemographicCopy(IDemographic* dst)
     ushort val = 20;
     AgeDefinition age = kAgeYears;
 
-    if (dst->setPatientAge(val, age) != 0) {
+    if (dst->setPatientAge(val, age) != 0)
+    {
         err |= (0x1 << 4);
     }
 
@@ -45,14 +49,16 @@ static int DemographicCopy(IDemographic* dst)
     HeightDefinition height = kHeightCentimeters;
     val = 170;
 
-    if (dst->setPatientHeight(val, height) != 0) {
+    if (dst->setPatientHeight(val, height) != 0)
+    {
         err |= (0x1 << 6);
     }
 
     WeightDefinition weight = kWeightKilogram;
     val = 50;
 
-    if (dst->setPatientWeight(val, weight) != 0) {
+    if (dst->setPatientWeight(val, weight) != 0)
+    {
         err |= (0x1 << 7);
     }
 
@@ -112,7 +118,8 @@ static int DemographicCopy(IDemographic* dst)
 static int SignalCopy(ISignal* dst)
 {
     // Check for correct input.
-    if (dst == null) {
+    if (dst == null)
+    {
         return 2;
     }
 
@@ -122,7 +129,8 @@ static int SignalCopy(ISignal* dst)
     signals.SetAVM(2.5);// AVM in uV
     signals.RhythmSamplesPerSecond = 500;
     std::vector<Signal> leads;
-    LeadType leadTypeArray[] = {
+    LeadType leadTypeArray[] =
+    {
         LeadTypeI,
         LeadTypeII,
         LeadTypeV1,
@@ -138,14 +146,16 @@ static int SignalCopy(ISignal* dst)
     };
     srand(time(null));
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 12; i++)
+    {
         Signal leadSignal;
         leadSignal.Type = leadTypeArray[i];
         leadSignal.RhythmStart = 0;
         leadSignal.RhythmEnd = 5000;
         leadSignal.Rhythm = new short[5000];
 
-        for (int k = 0; k < 5000; k++) {
+        for (int k = 0; k < 5000; k++)
+        {
             leadSignal.Rhythm[k] = rand() % 1000;
         }
 
@@ -155,7 +165,8 @@ static int SignalCopy(ISignal* dst)
 
     signals.setLeads(leads);
 
-    if (dst->setSignals(signals) != 0) {
+    if (dst->setSignals(signals) != 0)
+    {
         //TODO free leadSignal.Rhythm
         return 8;
     }
@@ -167,7 +178,8 @@ static int SignalCopy(ISignal* dst)
 static int DiagnosticCopy(IDiagnostic* dst)
 {
     // Check for correct input.
-    if (dst == null) {
+    if (dst == null)
+    {
         return 2;
     }
 
@@ -183,7 +195,8 @@ static int DiagnosticCopy(IDiagnostic* dst)
     stat.time.Second = 0;
     stat.statement.push_back("test text");
 
-    if (dst->setDiagnosticStatements(stat) != 0) {
+    if (dst->setDiagnosticStatements(stat) != 0)
+    {
         return 8;
     }
 
@@ -193,7 +206,8 @@ static int DiagnosticCopy(IDiagnostic* dst)
 static int GlobalMeasurementCopy(IGlobalMeasurement* dst)
 {
     // Check for correct input.
-    if (dst == null) {
+    if (dst == null)
+    {
         return 2;
     }
 
@@ -208,7 +222,8 @@ static int GlobalMeasurementCopy(IGlobalMeasurement* dst)
     mes.setQTc(425);
     mes.setAxis(39, 38, 45);
 
-    if (dst->setGlobalMeasurements(mes) != 0) {
+    if (dst->setGlobalMeasurements(mes) != 0)
+    {
         return 8;
     }
 
@@ -219,7 +234,8 @@ static int GlobalMeasurementCopy(IGlobalMeasurement* dst)
 static int LeadMeasurementCopy(ILeadMeasurement* dst)
 {
     // Check for correct input.
-    if (dst == null) {
+    if (dst == null)
+    {
         return 2;
     }
 
@@ -245,7 +261,8 @@ static int LeadMeasurementCopy(ILeadMeasurement* dst)
     mes.Measurements[10] = leadMeas1;
     mes.Measurements[11] = leadMeas2;
 
-    if (dst->setLeadMeasurements(mes) != 0) {
+    if (dst->setLeadMeasurements(mes) != 0)
+    {
         return 8;
     }
 
@@ -262,49 +279,60 @@ int main()
     IGlobalMeasurement* mesdst = scp.getGlobalMeasurements();
     ILeadMeasurement* leaddst = scp.getLeadMeasurements();
 
-    if (demdst != null) {
+    if (demdst != null)
+    {
         demdst->Init();
         int ret = DemographicCopy(demdst);
 
-        if (ret != 0) {
+        if (ret != 0)
+        {
             SCP_PE("DemographicCopy failed,ret[%d]\n", ret);
         }
     }
 
-    if (sigdst != null) {
+    if (sigdst != null)
+    {
         int ret = SignalCopy(sigdst);
 
-        if (ret != 0) {
+        if (ret != 0)
+        {
             SCP_PE("SignalCopy failed,ret[%d]\n", ret);
         }
     }
 
-    if (diadst != null) {
+    if (diadst != null)
+    {
         int ret = DiagnosticCopy(diadst);
 
-        if (ret != 0) {
+        if (ret != 0)
+        {
             SCP_PE("DiagnosticCopy failed,ret[%d]\n", ret);
         }
     }
 
-    if (mesdst != null) {
+    if (mesdst != null)
+    {
         int ret = GlobalMeasurementCopy(mesdst);
 
-        if (ret != 0) {
+        if (ret != 0)
+        {
             SCP_PE("DemogrGlobalMeasurementCopyaphicCopy failed,ret[%d]\n", ret);
         }
     }
 
 #if 0
-    if (leaddst != null) {
+
+    if (leaddst != null)
+    {
         int ret = LeadMeasurementCopy(leaddst);
 
-        if (ret != 0) {
+        if (ret != 0)
+        {
             SCP_PE("LeadMeasurementCopy failed,ret[%d]\n", ret);
         }
     }
-#endif
 
+#endif
     scp.setPointers();
     scp.Write("test.scp");
     return 0;

@@ -32,7 +32,8 @@ public:
     /// <remarks>
     /// OptimizedHuffman is same as DefaultHuffman, because it isn't implemented
     /// </remarks>
-    enum EncodingType {
+    enum EncodingType
+    {
         EncodingTypeNone = 0,
         EncodingTypeDefaultHuffman,
         EncodingTypeOptimizedHuffman

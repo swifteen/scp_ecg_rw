@@ -49,7 +49,8 @@ int SCPExtraMeasurements::Write(uchar* buffer, int bufferLength, int offset)
     offset += sizeof(TaggedFieldSize);
 #if 0
 
-    if (TaggedFields != null) {
+    if (TaggedFields != null)
+    {
         offset += BytesTool::copy(buffer, offset, TaggedFields, 0, TaggedFieldSize);
     }
 
@@ -76,7 +77,8 @@ void SCPExtraMeasurements::Empty()
 /// <returns>length of extra measurements</returns>
 int SCPExtraMeasurements::getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         int sum = sizeof(VentRate) + sizeof(AtrialRate);
         sum += sizeof(QTc) + sizeof(FormulaType) + sizeof(TaggedFieldSize);
         sum += TaggedFieldSize;
@@ -91,13 +93,15 @@ int SCPExtraMeasurements::getLength()
 /// <returns>if writeable is true</returns>
 bool SCPExtraMeasurements::Works()
 {
-    if (TaggedFieldSize == 0) {
+    if (TaggedFieldSize == 0)
+    {
         return true;
     }
 
 #if 0
     else if ((TaggedFields != null)
-             && (TaggedFields.Length >= TaggedFieldSize)) {
+             && (TaggedFields.Length >= TaggedFieldSize))
+    {
         return true;
     }
 
@@ -128,7 +132,8 @@ public:
     /// <returns>0 on success</returns>
     int Write(uchar* buffer, int bufferLength, int offset)
     {
-        if ((offset + Size) > bufferLength) {
+        if ((offset + Size) > bufferLength)
+        {
             return 0x1;
         }
 
@@ -177,7 +182,8 @@ public:
     /// <returns>0 on success</returns>
     int Write(uchar* buffer, int bufferLength, int offset)
     {
-        if ((offset + Size) > bufferLength) {
+        if ((offset + Size) > bufferLength)
+        {
             return 0x1;
         }
 
@@ -231,7 +237,8 @@ public:
     /// <returns>0 on success</returns>
     int Write(uchar* buffer, int bufferLength, int offset)
     {
-        if ((offset + Size) > bufferLength) {
+        if ((offset + Size) > bufferLength)
+        {
             SCP_PE("offset[%d],Size[%d],bufferLength[%d]\n", offset, Size, bufferLength);
             return 0x1;
         }
@@ -292,11 +299,14 @@ int SCPSection7::_Write(uchar* buffer, int bufferLength, int offset)
     BytesTool::writeBytes(_AvgPPInterval, buffer, bufferLength, offset, sizeof(_AvgPPInterval), true);
     offset += sizeof(_AvgPPInterval);
 
-    if (_NrRefTypeQRS > 0) {
-        for (int loper = 0; loper < _NrRefTypeQRS; loper++) {
+    if (_NrRefTypeQRS > 0)
+    {
+        for (int loper = 0; loper < _NrRefTypeQRS; loper++)
+        {
             int err = _Measurements[loper].Write(buffer, bufferLength, offset);
 
-            if (err != 0) {
+            if (err != 0)
+            {
                 SCP_PE("_Measurements[%d].Write failed,_NrRefTypeQRS[%d]\n", loper, _NrRefTypeQRS);
                 return 0x1;
             }
@@ -305,11 +315,14 @@ int SCPSection7::_Write(uchar* buffer, int bufferLength, int offset)
         }
     }
 
-    if (_NrSpikes > 0) {
-        for (int loper = 0; loper < _NrSpikes; loper++) {
+    if (_NrSpikes > 0)
+    {
+        for (int loper = 0; loper < _NrSpikes; loper++)
+        {
             int err = _Spikes[loper].Write(buffer, bufferLength, offset);
 
-            if (err != 0) {
+            if (err != 0)
+            {
                 SCP_PE("_Spikes[%d].Write failed,_NrSpikes[%d]\n", loper, _NrSpikes);
                 return 0x2;
             }
@@ -317,15 +330,18 @@ int SCPSection7::_Write(uchar* buffer, int bufferLength, int offset)
             offset += SCPSpike::Size;
         }
 
-        if (!_AfterSpikes) {
+        if (!_AfterSpikes)
+        {
             SCP_PD("no _SpikesInfo\n");
             return 0;
         }
 
-        for (int loper = 0; loper < _NrSpikes; loper++) {
+        for (int loper = 0; loper < _NrSpikes; loper++)
+        {
             int err = _SpikesInfo[loper].Write(buffer, bufferLength, offset);
 
-            if (err != 0) {
+            if (err != 0)
+            {
                 SCP_PE("_SpikesInfo[%d].Write failed,_NrSpikes[%d]\n", loper, _NrSpikes);
                 return 0x4;
             }
@@ -334,7 +350,8 @@ int SCPSection7::_Write(uchar* buffer, int bufferLength, int offset)
         }
     }
 
-    if (!_AfterSpikesInfo) {
+    if (!_AfterSpikesInfo)
+    {
         SCP_PD("no _QRSType\n");
         return 0;
     }
@@ -343,14 +360,17 @@ int SCPSection7::_Write(uchar* buffer, int bufferLength, int offset)
     offset += sizeof(_NrQRS);
 
     if ((_NrQRS > 0)
-        && (_QRSType != null)) {
-        for (int loper = 0; loper < _NrQRS; loper++) {
+        && (_QRSType != null))
+    {
+        for (int loper = 0; loper < _NrQRS; loper++)
+        {
             BytesTool::writeBytes(_QRSType[loper], buffer, bufferLength, offset, sizeof(_QRSType[loper]), true);
             offset += sizeof(_QRSType[loper]);
         }
     }
 
-    if (!_AfterQRSType) {
+    if (!_AfterQRSType)
+    {
         SCP_PD("no _ExtraMeasurements\n");
         return 0;
     }
@@ -359,7 +379,8 @@ int SCPSection7::_Write(uchar* buffer, int bufferLength, int offset)
     //    {
     int err = _ExtraMeasurements.Write(buffer, bufferLength, offset);
 
-    if (err != 0) {
+    if (err != 0)
+    {
         SCP_PE("_ExtraMeasurements.Write failed\n");
         return 0x8;
     }
@@ -369,7 +390,8 @@ int SCPSection7::_Write(uchar* buffer, int bufferLength, int offset)
 #if 0 //for read
 
     if ((_Rest != null)
-        && ((offset + _Rest.Length) < buffer.Length)) {
+        && ((offset + _Rest.Length) < buffer.Length))
+    {
         offset += BytesTool::copy(_Rest, 0, buffer, bufferLength, offset, _Rest.Length);
     }
 
@@ -397,19 +419,23 @@ void SCPSection7::_Empty()
 
 int SCPSection7::_getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         int sum = sizeof(_NrRefTypeQRS) + sizeof(_NrSpikes) + sizeof(_AvgPPInterval) + sizeof(_AvgRRInterval);
         sum += _NrRefTypeQRS * SCPMeasurement::Size;
         sum += (_NrSpikes * (SCPSpike::Size + SCPSpikeInfo::Size));
 
-        if (_AfterSpikes) {
+        if (_AfterSpikes)
+        {
             sum += sizeof(_NrQRS) + (_NrQRS * sizeof(uchar));
 
-            if (_AfterQRSType) {
+            if (_AfterQRSType)
+            {
                 sum += _ExtraMeasurements.getLength();
 #if 0 //for read
 
-                if (_Rest != null) {
+                if (_Rest != null)
+                {
                     sum += _Rest.Length;
                 }
 
@@ -432,20 +458,26 @@ ushort SCPSection7::getSectionID()
 bool SCPSection7::Works()
 {
     if ((_NrRefTypeQRS == 0)
-        || (_Measurements.size() == _NrRefTypeQRS)) {
+        || (_Measurements.size() == _NrRefTypeQRS))
+    {
         if ((_NrSpikes == 0)
-            || (_Spikes.size() == _NrSpikes)) {
-            if (!_AfterSpikes) {
+            || (_Spikes.size() == _NrSpikes))
+        {
+            if (!_AfterSpikes)
+            {
                 return ((_NrRefTypeQRS != 0) || (_NrSpikes != 0));
             }
 
-            if (_SpikesInfo.size() == _NrSpikes) {
-                if (!_AfterSpikesInfo) {
+            if (_SpikesInfo.size() == _NrSpikes)
+            {
+                if (!_AfterSpikesInfo)
+                {
                     return ((_NrRefTypeQRS != 0) || (_NrSpikes != 0));
                 }
 
                 if ((_NrQRS == 0)
-                    || (_QRSType != null)) {
+                    || (_QRSType != null))
+                {
                     return ((!_AfterQRSType)  || (_ExtraMeasurements.Works()));
                 }
             }
@@ -460,14 +492,16 @@ bool SCPSection7::Works()
 
 int SCPSection7::setGlobalMeasurements(GlobalMeasurements& mes)
 {
-    if (mes.measurment.size() > 0) {
+    if (mes.measurment.size() > 0)
+    {
         Empty();
         _AvgRRInterval = mes.AvgRR;
         _AvgPPInterval = mes.AvgPP;
         _NrRefTypeQRS = (uchar) mes.measurment.size();
         _Measurements.resize(_NrRefTypeQRS);
 
-        for (int loper = 0; loper < _NrRefTypeQRS; loper++) {
+        for (int loper = 0; loper < _NrRefTypeQRS; loper++)
+        {
             _Measurements[loper].Ponset = mes.measurment[loper].Ponset;
             _Measurements[loper].Poffset = mes.measurment[loper].Poffset;
             _Measurements[loper].QRSonset = mes.measurment[loper].QRSonset;
@@ -480,12 +514,14 @@ int SCPSection7::setGlobalMeasurements(GlobalMeasurements& mes)
 
         _NrSpikes = 0;
 
-        if (mes.spike.size() > 0) {
+        if (mes.spike.size() > 0)
+        {
             _NrSpikes = (uchar) mes.spike.size();
             _Spikes.resize(_NrSpikes);
             _SpikesInfo.resize(_NrSpikes);
 
-            for (int loper = 0; loper < _NrSpikes; loper++) {
+            for (int loper = 0; loper < _NrSpikes; loper++)
+            {
                 _Spikes[loper].Time = mes.spike[loper].Time;
                 _Spikes[loper].Amplitude = mes.spike[loper].Amplitude;
             }
@@ -503,7 +539,8 @@ int SCPSection7::setGlobalMeasurements(GlobalMeasurements& mes)
         _ExtraMeasurements.QTc = mes.getQTc();
         uchar temp = (uchar)(mes.getQTcType() + 1);
 
-        if (temp > 2) {
+        if (temp > 2)
+        {
             temp = 0;
         }
 

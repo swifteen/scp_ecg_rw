@@ -12,7 +12,8 @@ namespace SCP
 class SCPSection
 {
 public:
-    enum {
+    enum
+    {
         kReservedLength = 6,
     };
     /// <summary>

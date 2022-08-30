@@ -26,7 +26,8 @@ SCPSectionUnknown::SCPSectionUnknown(ushort sectionId)
 SCPSectionUnknown::~SCPSectionUnknown()
 {
     // Part of the stored Data Structure.
-    if (_Data != null) {
+    if (_Data != null)
+    {
         delete[] _Data;
         _Data = null;
     }
@@ -45,7 +46,8 @@ void SCPSectionUnknown::_Empty()
 
 int SCPSectionUnknown::_getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         return _DataLength;
     }
 
@@ -59,7 +61,8 @@ ushort SCPSectionUnknown::getSectionID()
 
 bool SCPSectionUnknown::Works()
 {
-    if (_Data != null) {
+    if (_Data != null)
+    {
         return true;
     }
 
@@ -68,14 +71,17 @@ bool SCPSectionUnknown::Works()
 
 void SCPSectionUnknown::setInternalData(uchar* InternalData, int InternalDataLength)
 {
-    if ((InternalData != null) && (InternalDataLength > 0)) {
-        if (_Data != null) {
+    if ((InternalData != null) && (InternalDataLength > 0))
+    {
+        if (_Data != null)
+        {
             delete [] _Data;
         }
 
         _Data = new uchar[InternalDataLength];
 
-        if (_Data != null) {
+        if (_Data != null)
+        {
             memcpy(_Data, InternalData, InternalDataLength);
         }
     }

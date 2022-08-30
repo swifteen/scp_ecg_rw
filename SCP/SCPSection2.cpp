@@ -33,7 +33,8 @@ class SCPHuffmanStruct
     /// <returns>0 on success</returns>
     int Write(uchar* buffer, int bufferLength, int offset)
     {
-        if ((offset + Size) > bufferLength) {
+        if ((offset + Size) > bufferLength)
+        {
             return 0x1;
         }
 
@@ -49,7 +50,8 @@ class SCPHuffmanStruct
         uint tempCode1 = code;
         uint tempCode2 = 0;
 
-        for (int loper = prefix; loper > 0; loper--) {
+        for (int loper = prefix; loper > 0; loper--)
+        {
             tempCode2 <<= 1;
             tempCode2 |= (tempCode1 & 0x1);
             tempCode1 >>= 1;
@@ -101,15 +103,19 @@ int SCPSection2::_Write(uchar* buffer, int bufferLength, int offset)
     offset += sizeof(_NrTables);
 #if 0 //use DefaultTable
 
-    if (_NrTables < _DefaultTable) {
-        for (int table = 0; table < _NrTables; table++) {
+    if (_NrTables < _DefaultTable)
+    {
+        for (int table = 0; table < _NrTables; table++)
+        {
             BytesTool::writeBytes(_Tables[table].Length, buffer, bufferLength, offset, sizeof(_NrTables), true);
             offset += sizeof(_NrTables);
 
-            for (int loper = 0; loper < _Tables[table].Length; loper++) {
+            for (int loper = 0; loper < _Tables[table].Length; loper++)
+            {
                 int err = _Tables[table][loper].Write(buffer, bufferLength, offset);
 
-                if (err != 0) {
+                if (err != 0)
+                {
                     return err << table;
                 }
 
@@ -130,12 +136,15 @@ void SCPSection2::_Empty()
 }
 int SCPSection2::_getLength()
 {
-    if (Works()) {
+    if (Works())
+    {
         int sum = sizeof(_NrTables);
 #if 0 //use DefaultTable
 
-        if (_NrTables != _DefaultTable) {
-            for (int table = 0; table < _NrTables; table++) {
+        if (_NrTables != _DefaultTable)
+        {
+            for (int table = 0; table < _NrTables; table++)
+            {
                 sum += sizeof(_NrTables) + (_Tables[table].Length * SCPHuffmanStruct::Size);
             }
         }
@@ -156,14 +165,19 @@ bool SCPSection2::Works()
 #if 0 //use DefaultTable
 
     if ((_Tables != null)
-        && (_NrTables == _Tables.Length)) {
-        for (int table = 0; table < _Tables.Length; table++) {
-            if (_Tables[table] == null) {
+        && (_NrTables == _Tables.Length))
+    {
+        for (int table = 0; table < _Tables.Length; table++)
+        {
+            if (_Tables[table] == null)
+            {
                 return false;
             }
 
-            for (int loper = 0; loper < _Tables[table].Length; loper++) {
-                if (_Tables[table][loper] == null) {
+            for (int loper = 0; loper < _Tables[table].Length; loper++)
+            {
+                if (_Tables[table][loper] == null)
+                {
                     return false;
                 }
             }
@@ -173,7 +187,8 @@ bool SCPSection2::Works()
     }
     else if ((_Tables == null)
              && ((_NrTables == _DefaultTable)
-                 || (_NrTables == 0))) {
+                 || (_NrTables == 0)))
+    {
         return true;
     }
 
@@ -190,17 +205,21 @@ bool SCPSection2::Works()
 SCPHuffmanStruct SCPSection2::InterpettingData(byte[] buffer, int offset)
 {
     if ((_Tables[_Selected] != null)
-        && (buffer != null)) {
+        && (buffer != null))
+    {
         uint bitBuffer = 0;
         int readMax = _Tables[_Selected][_Tables[_Selected].Length - 1].prefix;
 
-        for (int read = 0; read < readMax && ((read + offset) >> 3) < buffer.Length; read++) {
+        for (int read = 0; read < readMax && ((read + offset) >> 3) < buffer.Length; read++)
+        {
             bitBuffer <<= 1;
             bitBuffer |= (uint)((buffer[(offset + read) >> 3] >> (0x7 - ((offset + read) & 0x7))) & 0x1);
 
-            for (int table = 0; table < _Tables[_Selected].Length; table++) {
+            for (int table = 0; table < _Tables[_Selected].Length; table++)
+            {
                 if ((bitBuffer == _Tables[_Selected][table].code)
-                    && ((read + 1) == _Tables[_Selected][table].prefix)) {
+                    && ((read + 1) == _Tables[_Selected][table].prefix))
+                {
                     return _Tables[_Selected][table];
                 }
             }
@@ -220,16 +239,20 @@ SCPHuffmanStruct SCPSection2::InterpettingData(byte[] buffer, int offset)
 /// <returns>byte array containing encoded data</returns>
 uchar* SCPSection2::Encode(short* data, int dataLength, int time, short usedTable, uchar difference, int* encodeLength)
 {
-    if (Works() || _NrTables == 0) {
-        if (_NrTables == _DefaultTable) {
+    if (Works() || _NrTables == 0)
+    {
+        if (_NrTables == _DefaultTable)
+        {
             return InhouseEncode(data, dataLength, time, difference, encodeLength);
         }
 
 #if 0 //use DefaultTable
-        else if (_NrTables == 0) {
+        else if (_NrTables == 0)
+        {
             return NoEncode(data, time, difference);
         }
-        else {
+        else
+        {
             return HuffmanTableEncode(data, time, usedTable, difference);
         }
 
@@ -251,18 +274,21 @@ uchar* SCPSection2::InhouseEncode(short* data, int dataLength, int time, uchar d
 
     // Check if input makes sense
     if ((data != null)
-        && (time <= dataLength)) {
+        && (time <= dataLength))
+    {
         // Initialize some handy variables
         int currentBit = 0;
         // Make buffer for worst case.
         uchar* buffer = new uchar[((time * 26) >> 3) + 1];
 
         // For each sample do encode.
-        for (int currentTime = 0; currentTime < time; currentTime++) {
+        for (int currentTime = 0; currentTime < time; currentTime++)
+        {
             short code = 0;
 
             // Encode Differences.
-            switch (difference) {
+            switch (difference)
+            {
                 case 0:
                     code = data[currentTime];
                     break;
@@ -282,22 +308,27 @@ uchar* SCPSection2::InhouseEncode(short* data, int dataLength, int time, uchar d
 
             // Do inhouse encode
             //System.Diagnostics.Debug.WriteLine("Begin inhouse!"+code.ToString());
-            if (code == -32768) {
+            if (code == -32768)
+            {
                 code = 32767;
             }
 
-            if (abs(code) <= 8) {
+            if (abs(code) <= 8)
+            {
                 //  System.Diagnostics.Debug.WriteLine("Begin !");
                 // if code 0 then add one 0 bit.
-                if (code == 0) {
+                if (code == 0)
+                {
                     buffer[currentBit >> 3] <<= 1;
                     currentBit++;
                 }
-                else {
+                else
+                {
                     // add absolute number of 1 bits.
                     int codeAbs = abs(code);
 
-                    for (int loper = 0; loper < codeAbs; loper++) {
+                    for (int loper = 0; loper < codeAbs; loper++)
+                    {
                         buffer[currentBit >> 3] <<= 1;
                         buffer[currentBit >> 3] |= 1;
                         currentBit++;
@@ -309,17 +340,20 @@ uchar* SCPSection2::InhouseEncode(short* data, int dataLength, int time, uchar d
                     // add one more bit for positive of negative
                     buffer[currentBit >> 3] <<= 1;
 
-                    if (code < 0) {
+                    if (code < 0)
+                    {
                         buffer[currentBit >> 3] |= 1;
                     }
 
                     currentBit++;
                 }
             }
-            else {
+            else
+            {
                 // Code doesn't fit in normal table do special.
                 // First add nine 1 bits.
-                for (int loper = 0; loper < 9; loper++) {
+                for (int loper = 0; loper < 9; loper++)
+                {
                     buffer[currentBit >> 3] <<= 1;
                     buffer[currentBit >> 3] |= 1;
                     currentBit++;
@@ -329,7 +363,8 @@ uchar* SCPSection2::InhouseEncode(short* data, int dataLength, int time, uchar d
                 buffer[currentBit >> 3] <<= 1;
                 int extraLength = 8;
 
-                if (!((code <= 127) && (code >= -128))) {
+                if (!((code <= 127) && (code >= -128)))
+                {
                     buffer[currentBit >> 3] |= 1;
                     extraLength = 16;
                 }
@@ -337,7 +372,8 @@ uchar* SCPSection2::InhouseEncode(short* data, int dataLength, int time, uchar d
                 currentBit++;
 
                 // Add bits for extra code.
-                for (extraLength--; extraLength >= 0; extraLength--) {
+                for (extraLength--; extraLength >= 0; extraLength--)
+                {
                     buffer[currentBit >> 3] <<= 1;
                     buffer[currentBit >> 3] |= (uchar)((code >> extraLength) & 0x1);
                     currentBit++;
@@ -347,11 +383,13 @@ uchar* SCPSection2::InhouseEncode(short* data, int dataLength, int time, uchar d
         }
 
         // Shift end to right position.
-        if ((currentBit & 0x7) != 0x0) {
+        if ((currentBit & 0x7) != 0x0)
+        {
             buffer[(currentBit >> 3)] <<= (0x8 - (currentBit & 0x7));
             currentBit += (0x8 - (currentBit & 0x7));
         }
-        else {
+        else
+        {
             // seems to solve a small encoding bug.
             currentBit += 8;
         }
@@ -362,7 +400,8 @@ uchar* SCPSection2::InhouseEncode(short* data, int dataLength, int time, uchar d
         // Copy worst case buffer in fitting buffer.
 #if 0
 
-        for (int loper = 0; loper < retLength; loper++) {
+        for (int loper = 0; loper < retLength; loper++)
+        {
             ret[loper] = buffer[loper];
         }
 
@@ -392,7 +431,8 @@ byte[] SCPSection2::HuffmanTableEncode(short[] data, int time, short usedTable, 
 
     // Check if input makes sense
     if ((data != null)
-        && (time <= data.Length)) {
+        && (time <= data.Length))
+    {
         // Initialize some handy variables
         int currentBit = 0;
         // Make buffer for worst case.
@@ -400,14 +440,16 @@ byte[] SCPSection2::HuffmanTableEncode(short[] data, int time, short usedTable, 
 
         if ((usedTable >= 0)
             && (usedTable < _Tables.Length)
-            && (usedTable != _Selected)) {
+            && (usedTable != _Selected))
+        {
             uint code = 0;
             int len = 0;
             // get TableSwap position in HuffmanTable.
             int p = getTableSwap(usedTable);
 
             // Check if table swap is possible in this table.
-            if (p >= 0) {
+            if (p >= 0)
+            {
                 // Store needed data from swap HuffmanStruct.
                 code = _Tables[_Selected][p].code;
                 len = _Tables[_Selected][p].entire;
@@ -419,23 +461,27 @@ byte[] SCPSection2::HuffmanTableEncode(short[] data, int time, short usedTable, 
             buffer = new byte[((len + (time * getWorstCase())) >> 3) + 1];
 
             // add table swap.
-            for (len--; len >= 0; len--) {
+            for (len--; len >= 0; len--)
+            {
                 buffer[currentBit >> 3] <<= 1;
                 buffer[currentBit >> 3] |= (uchar)((code >> len) & 0x1);
                 currentBit++;
             }
         }
-        else {
+        else
+        {
             // No tables swap, so only space needed for worst case.
             buffer = new byte[((time * getWorstCase()) >> 3) + 1];
         }
 
         // For each sample do encode.
-        for (int currentTime = 0; currentTime < time; currentTime++) {
+        for (int currentTime = 0; currentTime < time; currentTime++)
+        {
             short code = 0;
 
             // Encode Differences.
-            switch (difference) {
+            switch (difference)
+            {
                 case 0:
                     code = data[currentTime];
                     break;
@@ -456,13 +502,15 @@ byte[] SCPSection2::HuffmanTableEncode(short[] data, int time, short usedTable, 
             // Call Interpetting data to get an hit.
             SCPHuffmanStruct h = InterpettingData(code);
 
-            if (h == null) {
+            if (h == null)
+            {
                 // not hit table or data must be wrong.
                 return null;
             }
 
             // Push in the code.
-            for (int loper = (h.prefix - 1); loper >= 0; loper--) {
+            for (int loper = (h.prefix - 1); loper >= 0; loper--)
+            {
                 buffer[currentBit >> 3] <<= 1;
                 buffer[currentBit >> 3] |= (uchar)((h.code >> loper) & 0x1);
                 currentBit++;
@@ -471,7 +519,8 @@ byte[] SCPSection2::HuffmanTableEncode(short[] data, int time, short usedTable, 
             // Push in the extra code, for special case.
             uint now = (uint)(code - h.value);
 
-            for (int loper = (h.entire - h.prefix - 1); loper >= 0; loper--) {
+            for (int loper = (h.entire - h.prefix - 1); loper >= 0; loper--)
+            {
                 buffer[currentBit >> 3] <<= 1;
                 buffer[currentBit >> 3] |= (uchar)((code >> loper) & 0x1);
                 currentBit++;
@@ -479,11 +528,13 @@ byte[] SCPSection2::HuffmanTableEncode(short[] data, int time, short usedTable, 
         }
 
         // Shift end to right position.
-        if ((currentBit & 0x7) != 0x0) {
+        if ((currentBit & 0x7) != 0x0)
+        {
             buffer[(currentBit >> 3)] <<= (0x8 - (currentBit & 0x7));
             currentBit += (0x8 - (currentBit & 0x7));
         }
-        else {
+        else
+        {
             // seems to solve a small encoding bug.
             currentBit += 8;
         }
@@ -492,7 +543,8 @@ byte[] SCPSection2::HuffmanTableEncode(short[] data, int time, short usedTable, 
         ret = new byte[(currentBit >> 3)];
 
         // Copy worst case buffer in fitting buffer.
-        for (int loper = 0; loper < ret.Length; loper++) {
+        for (int loper = 0; loper < ret.Length; loper++)
+        {
             ret[loper] = buffer[loper];
         }
     }
@@ -508,23 +560,27 @@ SCPHuffmanStruct SCPSection2::InterpettingData(short value)
 {
     // Check if selected Table exists
     if ((_Tables != null)
-        && (_Tables[_Selected] != null)) {
+        && (_Tables[_Selected] != null))
+    {
         // Search in structs of table.
-        for (int loper = 0; loper < _Tables[_Selected].Length; loper++) {
+        for (int loper = 0; loper < _Tables[_Selected].Length; loper++)
+        {
             SCPHuffmanStruct h = _Tables[_Selected][loper];
             // -1, because it can be positive and negative
             int extra = (h.entire - h.prefix - 1);
 
             // Check if value is equal to struct.
             if ((h.value == value)
-                && (h.tablemode != 0)) {
+                && (h.tablemode != 0))
+            {
                 return h;
             }
             // Check if value fits in special case.
             else if ((extra > 0)
                      && ((value - h.value) < (0x1 << extra))
                      && ((value - h.value) >= -(0x1 << extra))
-                     && (h.tablemode != 0)) {
+                     && (h.tablemode != 0))
+            {
                 return h;
             }
         }
@@ -544,7 +600,8 @@ static byte[] SCPSection2::NoEncode(short[] data, int time, uchar difference)
 {
     // Check if input data makes sense.
     if ((data != null)
-        && (time <= data.Length)) {
+        && (time <= data.Length))
+    {
         // Initializing some handy variables
         int offset = 0;
         int sizeOfSample = sizeof(typeof(short));
@@ -552,11 +609,13 @@ static byte[] SCPSection2::NoEncode(short[] data, int time, uchar difference)
         byte[] ret = new byte[time * sizeOfSample];
 
         // For each sample do encode.
-        for (int currentTime = 0; currentTime < time; currentTime++) {
+        for (int currentTime = 0; currentTime < time; currentTime++)
+        {
             short code = 0;
 
             // Encode Differences.
-            switch (difference) {
+            switch (difference)
+            {
                 case 0:
                     code = data[currentTime];
                     break;
@@ -590,7 +649,8 @@ static byte[] SCPSection2::NoEncode(short[] data, int time, uchar difference)
 /// </summary>
 void SCPSection2::ResetSelect()
 {
-    if (Works()) {
+    if (Works())
+    {
         _Selected = 0;
     }
 }
@@ -604,10 +664,13 @@ int SCPSection2::getTableSwap(int table)
 {
     if (Works()
         && (table < _Tables.Length)
-        && (_Selected < _Tables.Length)) {
-        for (int loper = 0; loper < _Tables[_Selected].Length; loper++) {
+        && (_Selected < _Tables.Length))
+    {
+        for (int loper = 0; loper < _Tables[_Selected].Length; loper++)
+        {
             if (_Tables[_Selected][loper].tablemode == 0
-                &&  _Tables[_Selected][loper].value == (table + 1)) {
+                &&  _Tables[_Selected][loper].value == (table + 1))
+            {
                 return loper;
             }
         }
@@ -624,18 +687,24 @@ int SCPSection2::getWorstCase()
 {
     int worst = -1;
 
-    if (Works()) {
-        if (_NrTables == _DefaultTable) {
+    if (Works())
+    {
+        if (_NrTables == _DefaultTable)
+        {
             worst = 26;
         }
-        else if (_NrTables == 0) {
+        else if (_NrTables == 0)
+        {
             worst = 16;
         }
-        else {
+        else
+        {
 #if 0 //use DefaultTable
 
-            for (int loper = 0; loper < _Tables[_Selected].Length; loper++) {
-                if (_Tables[_Selected][loper].entire > worst) {
+            for (int loper = 0; loper < _Tables[_Selected].Length; loper++)
+            {
+                if (_Tables[_Selected][loper].entire > worst)
+                {
                     worst = _Tables[_Selected][loper].entire;
                 }
             }

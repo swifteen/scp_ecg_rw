@@ -48,17 +48,20 @@ int SCPSection::Write(out byte[] buffer)
 {
     buffer = null;
 
-    if (Works()) {
+    if (Works())
+    {
         buffer = new byte[_getLength() + Size];
 
-        if (buffer.Length <= Size) {
+        if (buffer.Length <= Size)
+        {
             buffer = null;
             return 0;
         }
 
         int err = Write(buffer, 0);
 
-        if (err != 0) {
+        if (err != 0)
+        {
             buffer = null;
         }
 
@@ -82,13 +85,16 @@ int SCPSection::Write(uchar* buffer, int bufferLength, int offset)
 {
     Length = _getLength() + Size;
 
-    if (Length == Size) {
+    if (Length == Size)
+    {
         return 0;
     }
 
-    if (Works()) {
+    if (Works())
+    {
         if ((buffer != null)
-            && ((offset + Length) <= bufferLength)) {
+            && ((offset + Length) <= bufferLength))
+        {
             int crcoffset = offset;
             offset += sizeof(CRC);
             SectionID = getSectionID();
@@ -103,13 +109,15 @@ int SCPSection::Write(uchar* buffer, int bufferLength, int offset)
             offset += BytesTool::copy(buffer, bufferLength, offset, Reserved, kReservedLength, 0, kReservedLength);
             int err = _Write(buffer, bufferLength, offset);
 
-            if (err == 0) {
+            if (err == 0)
+            {
                 CRCTool crc;
                 crc.Init(CRCTool::CRC_CCITT);
                 CRC = crc.CalcCRCITT(buffer, bufferLength, crcoffset + sizeof(CRC), Length - sizeof(CRC));
                 BytesTool::writeBytes(CRC, buffer, bufferLength, crcoffset, sizeof(CRC), true);
             }
-            else {
+            else
+            {
                 SCP_PW("_Write failed,offset: %d,offset: %d,bufferLength: %d\n", offset, offset, bufferLength);
             }
 

@@ -9,7 +9,8 @@ namespace ECGDemographics
 /// <summary>
 /// An Enumration to determine the sex.
 /// </summary>
-enum Sex {
+enum Sex
+{
     kSexUnspecified = 0,
     kSexMale,
     kSexFemale,
@@ -18,7 +19,8 @@ enum Sex {
 /// <summary>
 /// An Enumration to determine the race.
 /// </summary>
-enum Race {
+enum Race
+{
     kRaceUnspecified = 0,
     kRaceCaucasian,
     kRaceBlack,
@@ -28,7 +30,8 @@ enum Race {
 /// <summary>
 /// An Enumration to determine the age definition.
 /// </summary>
-enum AgeDefinition {
+enum AgeDefinition
+{
     kAgeUnspecified = 0,
     kAgeYears,
     kAgeMonths,
@@ -39,7 +42,8 @@ enum AgeDefinition {
 /// <summary>
 /// An Enumration to determine the height definition.
 /// </summary>
-enum HeightDefinition {
+enum HeightDefinition
+{
     kHeightUnspecified = 0,
     kHeightCentimeters,
     kHeightInches,
@@ -48,7 +52,8 @@ enum HeightDefinition {
 /// <summary>
 /// An Enumration to determine the weight definition.
 /// </summary>
-enum WeightDefinition {
+enum WeightDefinition
+{
     kWeightUnspecified = 0,
     kWeightKilogram,
     kWeightGram,
@@ -58,14 +63,16 @@ enum WeightDefinition {
 /// <summary>
 /// An Enumration to determine the device type.
 /// </summary>
-enum DeviceType {
+enum DeviceType
+{
     kDeviceTypeCart = 0,
     kDeviceTypeSystem
 };
 /// <summary>
 /// An Enumration to determine the device manufactor.
 /// </summary>
-enum DeviceManufactor {
+enum DeviceManufactor
+{
     kDeviceManufactorUnknown = 0,
     kDeviceManufactorBurdick,
     kDeviceManufactorCambridge,
@@ -92,7 +99,8 @@ enum DeviceManufactor {
 /// <summary>
 /// An Enumration for Electrode Configurations for 12-lead ECG
 /// </summary>
-enum ElectrodeConfigCodeTwelveLead {
+enum ElectrodeConfigCodeTwelveLead
+{
     kElectrodeTwelveLeadUnspecified = 0,
     kElectrodeTwelveLeadStandardTwelveLead,
     kElectrodeTwelveLeadMasonLikarAndIndividual,
@@ -104,7 +112,8 @@ enum ElectrodeConfigCodeTwelveLead {
 /// <summary>
 /// An Enumration for Electrode Configurations for XYZ ECG
 /// </summary>
-enum ElectrodeConfigCodeXYZ {
+enum ElectrodeConfigCodeXYZ
+{
     kElectrodeXYZUnspecified = 0,
     kElectrodeXYZFrank,
     kElectrodeXYZMcFeeParungao,

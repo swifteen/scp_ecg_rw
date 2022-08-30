@@ -10,7 +10,8 @@ namespace ECGLeadMeasurements
 /// <summary>
 /// Enumration MeasurementType for lead measurements.
 /// </summary>
-enum MeasurementType {
+enum MeasurementType
+{
     MeasurementTypeNone = -1,
     MeasurementTypePdur = 0,
     MeasurementTypePRint,

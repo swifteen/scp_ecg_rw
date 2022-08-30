@@ -53,7 +53,8 @@ public:
         int temp = (Count < 50) ? 50 : (Count << 1);
 
         if ((temp <= ushort_MaxValue)
-            && (temp >= ushort_MinValue)) {
+            && (temp >= ushort_MinValue))
+        {
             _LeadLength = (ushort) temp;
             setLeadLength(_LeadLength);
         }
@@ -69,7 +70,8 @@ public:
 
         if ((_MeasurementsLength == 0)
             || (id < 0)
-            || (id >= _MeasurementsLength)) {
+            || (id >= _MeasurementsLength))
+        {
             return 0;
         }
 
@@ -81,32 +83,39 @@ public:
 
         if ((_Measurements != null)
             && (id >= 0)
-            && (id < _MeasurementsLength)) {
+            && (id < _MeasurementsLength))
+        {
             _Measurements[id] = measurementValue;
         }
     }
 
     void setLeadLength(ushort LeadLength)
     {
-        if (LeadLength >> 1 < 50) {
+        if (LeadLength >> 1 < 50)
+        {
             LeadLength = 50 << 1;
         }
 
-        if ((LeadLength == 0) && ((LeadLength & 0x1) != 0x1)) {
+        if ((LeadLength == 0) && ((LeadLength & 0x1) != 0x1))
+        {
             return;
         }
-        else {
+        else
+        {
             _MeasurementsLength = LeadLength >> 1;
 
-            if (_Measurements != null) {
+            if (_Measurements != null)
+            {
                 delete [] _Measurements;
                 _Measurements = null;
             }
 
             _Measurements = new short[_MeasurementsLength];
 
-            if (_Measurements != null) {
-                for (int i = 0; i < _MeasurementsLength; i++) {
+            if (_Measurements != null)
+            {
+                for (int i = 0; i < _MeasurementsLength; i++)
+                {
                     MeasurementType mt = (MeasurementType) i;
                     bool bZero = (mt == MeasurementTypePmorphology)
                                  || (mt == MeasurementTypeTmorphology)
@@ -126,12 +135,14 @@ public:
     /// <returns>0 on success</returns>
     int Write(uchar* buffer, int bufferLength, int offset)
     {
-        if (!Works()) {
+        if (!Works())
+        {
             SCP_PE("not Works\n");
             return 0x1;
         }
 
-        if ((offset + getLength()) > bufferLength) {
+        if ((offset + getLength()) > bufferLength)
+        {
             SCP_PE("out of range,offset: %d,getLength(): %d,bufferLength: %d\n", offset, getLength(), bufferLength);
             return 0x2;
         }
@@ -143,10 +154,12 @@ public:
         BytesTool::writeBytes(_LeadLength, buffer, bufferLength, offset, fieldSize, true);
         offset += fieldSize;
 
-        if (_LeadLength != 0) {
+        if (_LeadLength != 0)
+        {
             fieldSize = sizeof(short);
 
-            for (int i = 0; i < _MeasurementsLength; i++) {
+            for (int i = 0; i < _MeasurementsLength; i++)
+            {
                 BytesTool::writeBytes(_Measurements[i], buffer, bufferLength, offset, fieldSize, true);
                 offset += fieldSize;
             }
@@ -160,10 +173,12 @@ public:
     /// <returns>length of statement</returns>
     int getLength()
     {
-        if (Works()) {
+        if (Works())
+        {
             int sum = sizeof(_LeadId) + sizeof(_LeadLength);
 
-            if (_Measurements != null) {
+            if (_Measurements != null)
+            {
                 sum += _LeadLength;
             }
 
@@ -205,15 +220,18 @@ void SCPSection10::setNrLeads(ushort NrLeads)
 
 int SCPSection10::_Write(uchar* buffer, int bufferLength, int offset)
 {
-    if (!Works()) {
+    if (!Works())
+    {
         return 0x1;
     }
 
-    if ((offset + _getLength()) > bufferLength) {
+    if ((offset + _getLength()) > bufferLength)
+    {
         return 0x2;
     }
 
-    if (_NrLeads  == 0) {
+    if (_NrLeads  == 0)
+    {
         return 0;
     }
 
@@ -224,14 +242,17 @@ int SCPSection10::_Write(uchar* buffer, int bufferLength, int offset)
     BytesTool::writeBytes(_ManufactorSpecific, buffer, bufferLength, offset, fieldSize, true);
     offset += fieldSize;
 
-    if (_NrLeads == 0) {
+    if (_NrLeads == 0)
+    {
         return 0x0;
     }
 
-    for (int loper = 0; loper < _LeadMeasurements.size(); loper++) {
+    for (int loper = 0; loper < _LeadMeasurements.size(); loper++)
+    {
         int ret = _LeadMeasurements[loper].Write(buffer, bufferLength, offset);
 
-        if (ret != 0) {
+        if (ret != 0)
+        {
             return 0x1;
         }
 
@@ -247,15 +268,19 @@ void SCPSection10::_Empty()
 }
 int SCPSection10::_getLength()
 {
-    if (Works()) {
-        if (_NrLeads == 0) {
+    if (Works())
+    {
+        if (_NrLeads == 0)
+        {
             return 0;
         }
 
         int sum = sizeof(_NrLeads) + sizeof(_ManufactorSpecific);
 
-        if (_NrLeads != 0) {
-            for (int loper = 0; loper < _LeadMeasurements.size(); loper++) {
+        if (_NrLeads != 0)
+        {
+            for (int loper = 0; loper < _LeadMeasurements.size(); loper++)
+            {
                 sum += _LeadMeasurements[loper].getLength();
             }
         }
@@ -271,12 +296,15 @@ ushort SCPSection10::getSectionID()
 }
 bool SCPSection10::Works()
 {
-    if (_NrLeads == 0) {
+    if (_NrLeads == 0)
+    {
         return true;
     }
 
-    for (int loper = 0; loper < _LeadMeasurements.size(); loper++) {
-        if (!_LeadMeasurements[loper].Works()) {
+    for (int loper = 0; loper < _LeadMeasurements.size(); loper++)
+    {
+        if (!_LeadMeasurements[loper].Works())
+        {
             return false;
         }
     }
@@ -290,15 +318,18 @@ int SCPSection10::setLeadMeasurements(LeadMeasurements& mes)
     _NrLeads = (ushort) nrLeads;
     _LeadMeasurements.resize(nrLeads);
 
-    for (int i = 0; i < nrLeads; i++) {
+    for (int i = 0; i < nrLeads; i++)
+    {
         int nrValues = mes.Measurements[i].getMeasurementCount();
         //        nrValues = (nrLeads > 0) ? ((int) mes.Measurements[i].getKeyByIndex(nrValues-1))+1 : 0;
         _LeadMeasurements[i].setLeadType(mes.Measurements[i].leadType);
         _LeadMeasurements[i].setCount(MeasurementTypeSum);
         nrValues = mes.Measurements[i].getMeasurementCount();
 
-        for (int j = 0; j < (int)MeasurementTypeSum; j++) { 
-            if (mes.Measurements[i].getMeasurementValid((MeasurementType) i)) {
+        for (int j = 0; j < (int)MeasurementTypeSum; j++)
+        {
+            if (mes.Measurements[i].getMeasurementValid((MeasurementType) i))
+            {
                 _LeadMeasurements[i].setMeasurement((MeasurementType)j,
                                                     mes.Measurements[i].getMeasurement((MeasurementType)j));
             }

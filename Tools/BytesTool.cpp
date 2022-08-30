@@ -18,8 +18,10 @@ bool BytesTool::writeBytes(long values, uchar* buffer, int bufferLength, int off
     if ((buffer != null)
         && (offset + bytes) <= bufferLength
         && (bytes <= 8)
-        && (bytes > 0)) {
-        for (int read = 0; read < bytes; read++) {
+        && (bytes > 0))
+    {
+        for (int read = 0; read < bytes; read++)
+        {
             buffer[offset + (littleEndian ? read : (bytes - read - 1))] = (uchar)((values >> (read << 3)) & 0xff);
         }
 
@@ -57,11 +59,13 @@ void BytesTool::writeString(const std::string& dstEncoding,
                             int offset,
                             int length)
 {
-    if ((src.length() > 0) && (buffer != null)) {
+    if ((src.length() > 0) && (buffer != null))
+    {
         char* src_cstr = new char [src.length() + 1];
         char* tmp_src_cstr = src_cstr;
 
-        if (src_cstr == null) {
+        if (src_cstr == null)
+        {
             return;
         }
 
@@ -72,12 +76,14 @@ void BytesTool::writeString(const std::string& dstEncoding,
         size_t nrChars = (bufferLength < (offset + length)) ? bufferLength - offset : length;
         nrChars = (src.length() < nrChars) ? src.length() : nrChars;
 
-        if (nrChars > 0) {
+        if (nrChars > 0)
+        {
             /* Assign enough space to put the UTF-8. */
             size_t outbytesleft = 2 * nrChars;
             char* outbuf = new char[outbytesleft];
 
-            if (outbuf == null) {
+            if (outbuf == null)
+            {
                 delete[] src_cstr;
                 return;
             }
@@ -85,7 +91,8 @@ void BytesTool::writeString(const std::string& dstEncoding,
             memset(outbuf, 0, outbytesleft);
             int ret = convert_charset("UTF-8", dstEncoding.c_str(), src_cstr, src_cstr_len, outbuf, &outbytesleft);
 
-            if (0 == ret) {
+            if (0 == ret)
+            {
                 memcpy(buffer + offset, outbuf, outbytesleft);
             }
             else
@@ -112,12 +119,15 @@ int BytesTool::convert_charset(const char* from_charset,
 {
     iconv_t icd = iconv_open(to_charset, from_charset);
 
-    if ((iconv_t) - 1 == icd) {
+    if ((iconv_t) - 1 == icd)
+    {
         /* Initialization failure. */
-        if (errno == EINVAL) {
+        if (errno == EINVAL)
+        {
             SCP_PE("Conversion from '%s' to '%s' is not supported.\n", from_charset, to_charset);
         }
-        else {
+        else
+        {
             SCP_PE("Initialization failure: %s\n", strerror(errno));
         }
 
@@ -128,8 +138,10 @@ int BytesTool::convert_charset(const char* from_charset,
     char** pout = &dst_buf;
     size_t iconv_value = iconv(icd, pin, &src_len, pout, p_dst_len);
 
-    if (iconv_value == (size_t) - 1) {
-        switch (errno) {
+    if (iconv_value == (size_t) - 1)
+    {
+        switch (errno)
+        {
             /* See "man 3 iconv" for an explanation. */
             case EILSEQ:
                 SCP_PE("Invalid multibyte sequence.\n");
@@ -167,7 +179,8 @@ int BytesTool::copy(uchar* dst, int dstLength, int offdst, const uchar* src, int
 {
     int loper = 0;
 
-    for (; (loper < length) && ((offdst + loper) < dstLength) && ((offsrc + loper) < srcLength); loper++) {
+    for (; (loper < length) && ((offdst + loper) < dstLength) && ((offsrc + loper) < srcLength); loper++)
+    {
         dst[offdst + loper] = src[offsrc + loper];
     }
 
@@ -182,7 +195,8 @@ int BytesTool::copy(uchar* dst, int dstLength, int offdst, const uchar* src, int
 /// <param name="type">number to empty to</param>
 void BytesTool::emptyBuffer(uchar* buffer, int bufferLength, int offset, int nrbytes, uchar type)
 {
-    for (int x = 0; (x < nrbytes) && ((x + offset) < bufferLength); x++) {
+    for (int x = 0; (x < nrbytes) && ((x + offset) < bufferLength); x++)
+    {
         buffer[offset + x] = type;
     }
 }

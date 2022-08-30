@@ -25,7 +25,8 @@ public:
     /// <returns>0 on success</returns>
     int Write(uchar* buffer, int bufferLength, int offset)
     {
-        if ((offset + Size) > bufferLength) {
+        if ((offset + Size) > bufferLength)
+        {
             SCP_PE("out of range,offset: %d,Size: %d,bufferLength: %d\n", offset, Size, bufferLength);
             return 0x1;
         }
@@ -64,10 +65,12 @@ SCPSection0::SCPSection0()
 
 int SCPSection0::_Write(uchar* buffer, int bufferLength, int offset)
 {
-    for (int loper = 0; loper < kNrMandatory; loper++) {
+    for (int loper = 0; loper < kNrMandatory; loper++)
+    {
         int err = _MandatoryPointers[loper].Write(buffer, bufferLength, offset);
 
-        if (err != 0) {
+        if (err != 0)
+        {
             SCP_PE("Write failed,_MandatoryPointers: %d\n", loper);
             return err;
         }
@@ -97,7 +100,8 @@ int SCPSection0::_getLength()
 
 bool SCPSection0::Works()
 {
-    if (_MandatoryPointers.size() > 0) {
+    if (_MandatoryPointers.size() > 0)
+    {
         return true;
     }
 
@@ -123,7 +127,8 @@ void SCPSection0::setNrPointers(int nr)
     int current = kNrMandatory;
 
     if ((nr != current)
-        && (nr >= kNrMandatory)) {
+        && (nr >= kNrMandatory))
+    {
         _MandatoryPointers.resize(kNrMandatory);
     }
 }
@@ -136,8 +141,10 @@ void SCPSection0::setNrPointers(int nr)
 ushort SCPSection0::getSectionID(int nr)
 {
     if ((nr >= 0)
-        && (nr < getNrPointers())) {
-        if (nr < kNrMandatory) {
+        && (nr < getNrPointers()))
+    {
+        if (nr < kNrMandatory)
+        {
             return _MandatoryPointers[nr].Nr;
         }
     }
@@ -153,8 +160,10 @@ ushort SCPSection0::getSectionID(int nr)
 int SCPSection0::getIndex(int nr)
 {
     if ((nr >= 0)
-        && (nr < getNrPointers())) {
-        if (nr < kNrMandatory) {
+        && (nr < getNrPointers()))
+    {
+        if (nr < kNrMandatory)
+        {
             return _MandatoryPointers[nr].Index;
         }
     }
@@ -169,8 +178,10 @@ int SCPSection0::getIndex(int nr)
 /// <param name="index">index to set pointer to</param>
 void SCPSection0::setIndex(int nr, int index)
 {
-    if ((nr >= 0)  && (nr < getNrPointers())) {
-        if (nr < kNrMandatory) {
+    if ((nr >= 0)  && (nr < getNrPointers()))
+    {
+        if (nr < kNrMandatory)
+        {
             _MandatoryPointers[nr].Index = index;
             SCP_PD("nr: %d,index: %d\n", nr, index);
             return;
@@ -187,8 +198,10 @@ void SCPSection0::setIndex(int nr, int index)
 /// <returns>length of section</returns>
 int SCPSection0::getLength(int nr)
 {
-    if ((nr >= 0)  && (nr < getNrPointers())) {
-        if (nr < kNrMandatory) {
+    if ((nr >= 0)  && (nr < getNrPointers()))
+    {
+        if (nr < kNrMandatory)
+        {
             SCP_PD("nr: %d,length: %d\n", nr, _MandatoryPointers[nr].Length);
             return _MandatoryPointers[nr].Length;
         }
@@ -205,8 +218,10 @@ int SCPSection0::getLength(int nr)
 /// <param name="length">length of section</param>
 void SCPSection0::setLength(int nr, int length)
 {
-    if ((nr >= 0)  && (nr < getNrPointers())) {
-        if (nr < kNrMandatory) {
+    if ((nr >= 0)  && (nr < getNrPointers()))
+    {
+        if (nr < kNrMandatory)
+        {
             _MandatoryPointers[nr].Length = length;
             SCP_PD("nr: %d,length: %d\n", nr, length);
         }
@@ -226,7 +241,8 @@ void SCPSection0::getPointer(int nr, ushort& id, int& length, int& index)
     length = 0;
     index = 0;
 
-    if ((0 <= nr) && (nr < _MandatoryPointers.size())) {
+    if ((0 <= nr) && (nr < _MandatoryPointers.size()))
+    {
         id = _MandatoryPointers[nr].Nr;
         length = _MandatoryPointers[nr].Length;
         index = _MandatoryPointers[nr].Index;
@@ -245,7 +261,8 @@ void SCPSection0::getPointer(int nr, ushort& id, int& length, int& index)
 /// <param name="index">index of section</param>
 void SCPSection0::setPointer(int nr, ushort id, int length, int index)
 {
-    if ((0 <= nr) && (nr < _MandatoryPointers.size())) {
+    if ((0 <= nr) && (nr < _MandatoryPointers.size()))
+    {
         _MandatoryPointers[nr].Nr = id;
         _MandatoryPointers[nr].Length = length;
         _MandatoryPointers[nr].Index = index;

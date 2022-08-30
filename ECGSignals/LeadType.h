@@ -10,7 +10,8 @@ namespace ECGSignals
 /// <summary>
 /// Enumaration for lead types.
 /// </summary>
-enum LeadType {
+enum LeadType
+{
     LeadTypeUnknown = 0,
     LeadTypeI,
     LeadTypeII,
@@ -50,7 +51,8 @@ enum LeadType {
     dAB4, dES, dAS, dAI, dS, dRL, dCV5RL, dCV6LL, dCV6LU, dV10
 };
 
-enum LeadTypeVitalRefId {
+enum LeadTypeVitalRefId
+{
     MDC_ECG_LEAD_CONFIG = 0,
     MDC_ECG_LEAD_I,
     MDC_ECG_LEAD_II,

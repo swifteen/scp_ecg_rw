@@ -22,7 +22,8 @@ class SCPHeaderField;
 class SCPSection1 : public SCPSection, public IDemographic
 {
 public:
-    enum ProtocolCompatibility {
+    enum ProtocolCompatibility
+    {
         kProtocolCompatibilityCatI = 0x90,
         kProtocolCompatibilityCatII = 0xa0,
         kProtocolCompatibilityCatIII = 0xb0,
