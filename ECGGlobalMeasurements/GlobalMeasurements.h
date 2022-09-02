@@ -15,6 +15,16 @@ namespace ECGGlobalMeasurements
 class GlobalMeasurements
 {
 public:
+    enum QTcCalcType
+    {
+        Unknown = -1,
+        Bazett = 0,
+        Hodges = 1,
+        Fridericia = 2,
+        Framingham = 3,
+
+    };
+public:
     GlobalMeasurements();
     GlobalMeasurements Clone();
 

@@ -21,6 +21,7 @@ public:
     //region ILeadMeasurement Members
     ushort getNrLeads();
     void setNrLeads(ushort _NrLeads);
+    int getLeadMeasurements(LeadMeasurements& mes);
     int setLeadMeasurements(LeadMeasurements& mes);
 protected:
     int _Write(uchar* buffer, int bufferLength, int offset);

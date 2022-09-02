@@ -39,6 +39,13 @@ public:
     /// <param name="day">number of day</param>
     SCPDate(int year, int month, int day);
     /// <summary>
+    /// Function to read an SCP date from byte array.
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset);
+    /// <summary>
     /// Function to write an SCP date to a byte array.
     /// </summary>
     /// <param name="buffer">byte array to write in</param>

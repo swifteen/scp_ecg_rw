@@ -37,6 +37,27 @@ public:
         End = end;
         ID = id;
     }
+    /// <summary>
+    /// Function to read SCP lead information.
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if ((offset + Size) > bufferLength)
+        {
+            return 0x1;
+        }
+
+        Start = (int) BytesTool.readBytes(buffer, offset, sizeof(Start), true);
+        offset += sizeof(Start);
+        End = (int) BytesTool.readBytes(buffer, offset, sizeof(End), true);
+        offset += sizeof(End);
+        ID = (uchar) BytesTool.readBytes(buffer, offset, sizeof(ID), true);
+        offset += sizeof(ID);
+        return 0x0;
+    }
 
     /// <summary>
     /// Function to write SCP lead information.
@@ -78,6 +99,51 @@ SCPSection3::SCPSection3()
     _Flags = 0;
     _Flags |= 0x01;//Current :Reference beat subtraction not used for compression
     _Leads.clear();
+}
+
+int SCPSection3::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    int end = offset - Size + Length;
+
+    if ((offset + sizeof(_NrLeads) + sizeof(_Flags)) > end)
+    {
+        return 0x1;
+    }
+
+    _NrLeads = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_NrLeads), true);
+    offset += sizeof(_NrLeads);
+    _Flags = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Flags), true);
+    offset += sizeof(_Flags);
+
+    if (offset + (_NrLeads * SCPLead.Size) > end)
+    {
+        _Empty();
+        return 0x2;
+    }
+
+    // BEGIN DIRTY SOLUTION!!!
+    // this solution is for a bug in some CCW files.
+    if (((end - offset) / SCPLead.Size) > _NrLeads)
+    {
+        _NrLeads = (uchar)((end - offset) / SCPLead.Size);
+    }
+
+    // END DIRTY SOLUTION!!!
+    _Leads.resize(_NrLeads);
+
+    for (int loper = 0; loper < _NrLeads; loper++)
+    {
+        int err = _Leads[loper].Read(buffer, bufferLength, offset);
+
+        if (err != 0)
+        {
+            return err << 2 + loper;
+        }
+
+        offset += SCPLead.Size;
+    }
+
+    return 0x0;
 }
 
 int SCPSection3::_Write(uchar* buffer, int bufferLength, int offset)
@@ -323,6 +389,26 @@ bool SCPSection3::_isSimultaneously()
 
     return (_Leads.size() > 0) && (_NrLeads == 1);
 }
+// Signal Manupalations
+int SCPSection3::getSignals(Signals& signals)
+{
+    if (Works())
+    {
+        signals.setNrLeads(_NrLeads);
+
+        for (int loper = 0; loper < _NrLeads; loper++)
+        {
+            signals[loper].Type = (LeadType) _Leads[loper].ID;
+            signals[loper].RhythmStart = _Leads[loper].Start - 1;
+            signals[loper].RhythmEnd = _Leads[loper].End;
+        }
+
+        return 0;
+    }
+
+    return 1;
+}
+
 int SCPSection3::setSignals(Signals& signals)
 {
     if ((signals.getNrLeads() > 0)

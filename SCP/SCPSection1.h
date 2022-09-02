@@ -68,11 +68,24 @@ public:
     /// <returns>0 if successfull</returns>
     int setLanguageSupportCode(const std::string& enc);
     /// <summary>
+    /// Function to get Protocol Compatability Level.
+    /// </summary>
+    /// <param name="pc">Protocol Compatability Level</param>
+    /// <returns>0 on succes</returns>
+    int getProtocolCompatibilityLevel(ProtocolCompatibility& pc);
+    /// <summary>
     /// Function to set Protocol Compatability Level.
     /// </summary>
     /// <param name="pc">Protocol Compatability Level</param>
     /// <returns>0 on succes</returns>
     int setProtocolCompatibilityLevel(ProtocolCompatibility pc);
+    /// <summary>
+    /// Function to get a text from a certain tag.
+    /// </summary>
+    /// <param name="tag">id of tag</param>
+    /// <param name="text">a string</param>
+    /// <returns>0 on success</returns>
+    string getText(uchar tag);
     /// <summary>
     /// Function to set a text from a cetain tag.
     /// </summary>
@@ -82,36 +95,103 @@ public:
     int setText(uchar tag, const string& text);
 
     // Getting Demographics information
+    string getLastName();
     void setLastName(const string& value);
+
+    string getFirstName();
     void setFirstName(const string& value);
+
+    string getPatientID();
     void setPatientID(const string& value);
+
+    string getSecondLastName();
     void setSecondLastName(const string& value);
+
+    string getPrefixName();
+    void setPrefixName(const string& value);
+
+    string getSuffixName();
+    void setSuffixName(const string& value);
+
+    int getPatientAge(ushort& val, AgeDefinition& def);
     int setPatientAge(ushort val, AgeDefinition def);
+
+    Date getPatientBirthDate();
     void setPatientBirthDate(Date& PatientBirthDate);
+
+    int getPatientHeight(ushort& val, HeightDefinition& def);
     int setPatientHeight(ushort val, HeightDefinition def);
+
+    int getPatientWeight(ushort& val, WeightDefinition& def);
     int setPatientWeight(ushort val, WeightDefinition def);
+
+    Sex getGender();
     void setGender(Sex Gender);
+
+    Race getPatientRace();
     void setPatientRace(Race PatientRace);
+
+    AcquiringDeviceID getAcqMachineID();
     void setAcqMachineID(const AcquiringDeviceID& AcqMachineID);
+
+    AcquiringDeviceID getAnalyzingMachineID();
     void setAnalyzingMachineID(const AcquiringDeviceID& AnalyzingMachineID);
+
+    DateTime getTimeAcquisition();
     void setTimeAcquisition(const DateTime& time);
+
+    ushort getBaselineFilter();
     void setBaselineFilter(ushort BaselineFilter);
+
+    ushort getLowpassFilter();
     void setLowpassFilter(ushort LowpassFilter);
+
+    uchar getFilterBitmap();
     void setFilterBitmap(uchar FilterBitmap);
+
+    std::vector<string> getFreeTextFields();
     void setFreeTextFields(const std::vector<string>&      FreeTextFields);
+
+    string getSequenceNr();
     void setSequenceNr(const string& SequenceNr);
+
+    string getAcqInstitution();
     void setAcqInstitution(const string& AcqInstitution);
+
+    string getAnalyzingInstitution();
     void setAnalyzingInstitution(const string& AnalyzingInstitution);
+
+    string getAcqDepartment();
     void setAcqDepartment(const string& AcqDepartment);
+
+    string getAnalyzingDepartment();
     void setAnalyzingDepartment(const string& AnalyzingDepartment);
+
+    string getReferringPhysician();
     void setReferringPhysician(const string& ReferringPhysician);
+
+    string getOverreadingPhysician();
     void setOverreadingPhysician(const string& OverreadingPhysician);
+
+    string getTechnicianDescription();
     void setTechnicianDescription(const string& TechnicianDescription);
+
+    ushort getSystolicBloodPressure();
     void setSystolicBloodPressure(ushort SystolicBloodPressure);
+
+    ushort getDiastolicBloodPressure();
     void setDiastolicBloodPressure(ushort DiastolicBloodPressure);
+
+    std::vector<Drug> getDrugs();
     void setDrugs(std::vector<Drug>& Drugs);
+
+    std::vector<string>  getReferralIndication();
     void setReferralIndication(const std::vector<string>& ReferralIndication);
+
+    string getRoomDescription();
     void setRoomDescription(const string& RoomDescription);
+
+    uchar getStatCode();
     void setStatCode(uchar StatCode);
 protected:
     int _Write(uchar* buffer, int bufferLength, int offset);

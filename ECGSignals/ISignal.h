@@ -13,6 +13,12 @@ class ISignal
 {
 public:
     /// <summary>
+    /// Function to get the signal of an ECG.
+    /// </summary>
+    /// <param name="signals">signals</param>
+    /// <returns>0 on succes</returns>
+    virtual int getSignals(Signals& signals) = 0;
+    /// <summary>
     /// Function to set the signals of an ECG.
     /// </summary>
     /// <param name="signals">signals</param>

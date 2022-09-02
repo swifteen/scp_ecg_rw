@@ -23,7 +23,26 @@ public:
     SCPSection2();
     ushort getSectionID();
     bool Works();
-
+    /// <summary>
+    /// Function to decode encoded data.
+    /// </summary>
+    /// <param name="buffer">buffer to read in</param>
+    /// <param name="offset">position to start reading</param>
+    /// <param name="nrbytes">nrbytes of encoded bytes in buffer</param>
+    /// <param name="length">length of signal in samples</param>
+    /// <param name="difference">difference to use durring decoding</param>
+    /// <returns>short array containing decoded data</returns>
+    short* Decode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference);
+    /// <summary>
+    /// Function to do huffman decode of encoded data. (using SCP default huffmantable)
+    /// </summary>
+    /// <param name="buffer">buffer to read in</param>
+    /// <param name="offset">position to start reading</param>
+    /// <param name="nrbytes">nrbytes of encoded bytes in buffer</param>
+    /// <param name="length">length of signal in samples</param>
+    /// <param name="difference">difference to use durring decoding</param>
+    /// <returns>short array containing decoded data</returns>
+    static short* InhouseDecode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference);
     /// <summary>
     /// Function to encode data.
     /// </summary>
@@ -32,7 +51,7 @@ public:
     /// <param name="usedTable">table to use for encoding</param>
     /// <param name="difference">difference to use durring decoding</param>
     /// <returns>byte array containing encoded data</returns>
-    uchar* Encode(short* data, int dataLength, int time, short usedTable, uchar difference, int* encodeLength);
+    uchar* Encode(short* buffer, int dataLength, int time, short usedTable, uchar difference, int* encodeLength);
     /// <summary>
     /// Function to encode signal using the default huffman table (using optimized code).
     /// </summary>

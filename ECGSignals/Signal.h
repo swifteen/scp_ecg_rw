@@ -58,8 +58,9 @@ public:
 
     short* Rhythm;
     int RhythmLength;
-    //  std::vector<short> Rhythm;
-    //short[] Median;
+
+    short* Median;
+    int MedianLength;
 };
 }
 }

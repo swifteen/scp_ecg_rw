@@ -5,6 +5,34 @@
 namespace Communication_IO_Tools
 {
 /// <summary>
+/// Function to read a integer from a buffer at an offset.
+/// </summary>
+/// <param name="buffer">source buffer</param>
+/// <param name="offset"></param>
+/// <param name="bytes">length of integer</param>
+/// <param name="littleEndian">little endian or big endian integer</param>
+/// <returns>read integer</returns>
+long BytesTool::readBytes(uchar* buffer, int bufferLength, int offset, int bytes, bool littleEndian)
+{
+    long returnValue = 0;
+
+    if (bytes > 8)
+    {
+        bytes = 8;
+    }
+
+    if (offset + bytes <= bufferLength)
+    {
+        for (int read = 0; read < bytes; read++)
+        {
+            returnValue |= (long) buffer[offset + (littleEndian ? read : (bytes - read - 1))] << (read << 3);
+        }
+    }
+
+    return returnValue;
+}
+
+/// <summary>
 /// Function to write an integer to a buffer at an offset.
 /// </summary>
 /// <param name="values">integer to write</param>
@@ -31,6 +59,143 @@ bool BytesTool::writeBytes(long values, uchar* buffer, int bufferLength, int off
 
     SCP_PE("values:%ld,bufferLength:%d,offset:%d,bytes:%d\n", values, bufferLength, offset, bytes);
     return false;
+}
+/// <summary>
+/// Function to read a string from a byte array at a given offset
+/// </summary>
+/// <param name="buffer">to read the string from</param>
+/// <param name="offset">position to start reading</param>
+/// <param name="length">max length of string</param>
+/// <returns>a string</returns>
+static string BytesTool::readString(uchar* buffer, int bufferLength, int offset, int length)
+{
+    return readString("ASCII", buffer, bufferLength, offset, length);
+}
+/// <summary>
+/// Function to read a string from a byte array at a given offset
+/// </summary>
+/// <param name="buffer">to read the string from</param>
+/// <param name="offset">position to start reading</param>
+/// <param name="length">max length of string</param>
+/// <param name="value">value to use as terminator of string</param>
+/// <returns>a string</returns>
+static string BytesTool::readString(uchar* buffer, int bufferLength, int offset, int length, uchar terminator)
+{
+    int strLen = stringLength(buffer, bufferLength, offset, length, terminator);
+
+    if (strLen != 0)
+    {
+        char* a = new char[strLen + 1];//TODO验证是否需要加1
+        memcpy(a, buffer + offset, strLen);
+        a[strLen] = '\0';
+        string str(a);
+        delete [] a;
+        return str;
+    }
+
+    return string("");
+}
+/// <summary>
+/// Function to read a string from a byte array at a given offset
+///将源字符集为srcEncoding为字符串转换为UTF-8编码的字符串
+/// </summary>
+/// <param name="enc">enconding type</param>
+/// <param name="buffer">to read the string from</param>
+/// <param name="offset">position to start reading</param>
+/// <param name="length">max length of string</param>
+/// <returns>a string</returns>
+static string BytesTool::readString(const std::string& srcEncoding, uchar* buffer, int bufferLength, int offset, int length)
+{
+    string ret = "";
+#if 0
+    int strLen = stringLength(srcEncoding, buffer, bufferLength, offset, length);
+
+    if (strLen != 0)
+    {
+        int maxLen = enc.GetMaxByteCount(strLen);
+        length = (length > maxLen) ? maxLen : length;
+        ret = enc.GetString(buffer, offset, length);
+
+        if ((ret != null)
+            && (ret.Length > strLen))
+        {
+            ret = ret.Substring(0, strLen);
+        }
+    }
+
+#endif
+    return ret;
+}
+/// <summary>
+/// Function to calculate length of string in buffer starting at an offset.
+/// </summary>
+/// <param name="buffer">source buffer</param>
+/// <param name="offset">position to start counting from</param>
+/// <param name="length">max length of string</param>
+/// <returns>length of string</returns>
+static int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, int length)
+{
+    return stringLength("ASCII", buffer, bufferLength, offset, length);
+}
+/// <summary>
+/// Function to calculate length of string in buffer starting at an offset.
+/// </summary>
+/// <param name="buffer">source buffer</param>
+/// <param name="offset">position to start counting from</param>
+/// <param name="length">max length of string</param>
+/// <param name="value">value to use as terminator of string</param>
+/// <returns>length of string</returns>
+static int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, int length, uchar terminator)
+{
+    int x = 0;
+
+    if (length < 0)
+    {
+        while ((buffer != null)
+               && ((offset + x) < bufferLength)
+               && (buffer[offset + x] != terminator))
+        {
+            x++;
+        }
+    }
+    else
+    {
+        while ((buffer != null)
+               && ((offset + x) < bufferLength)
+               && (x < length)
+               && (buffer[offset + x] != terminator))
+        {
+            x++;
+        }
+    }
+
+    return x;
+}
+/// <summary>
+/// Function to calculate length of string in buffer starting at an offset.
+/// </summary>
+/// <param name="enc">enconding type</param>
+/// <param name="buffer">source buffer</param>
+/// <param name="offset">position to start counting from</param>
+/// <param name="length">max length of string</param>
+/// <returns>length of string</returns>
+static int BytesTool::stringLength(const std::string& srcEncoding, uchar* buffer, int bufferLength, int offset, int length)
+{
+    int len = 0;
+#if 0 //TODO
+
+    foreach (char temp in enc.GetChars(buffer, offset, (bufferLength < (offset + length)) ? bufferLength - offset : length))
+    {
+        if (temp == '\0')
+        {
+            break;
+        }
+
+        len++;
+    }
+
+#endif
+    return len;
 }
 
 /// <summary>
@@ -109,6 +274,39 @@ void BytesTool::writeString(const std::string& dstEncoding,
         delete[] src_cstr;
     }
 }
+/// <summary>
+/// Function to copy content of one buffer to another.
+/// </summary>
+/// <param name="dst">destination buffer</param>
+/// <param name="offdst">offset in destination buffer</param>
+/// <param name="src">source buffer</param>
+/// <param name="offsrc">offset in source buffer</param>
+/// <param name="length">number bytes to copy</param>
+int BytesTool::copy(uchar* dst, int dstLength, int offdst, const uchar* src, int srcLength, int offsrc, int length)
+{
+    int loper = 0;
+
+    for (; (loper < length) && ((offdst + loper) < dstLength) && ((offsrc + loper) < srcLength); loper++)
+    {
+        dst[offdst + loper] = src[offsrc + loper];
+    }
+
+    return loper;
+}
+/// <summary>
+/// Function to empty a buffer to a defined number.
+/// </summary>
+/// <param name="buffer">destination buffer</param>
+/// <param name="offset">offset in buffer</param>
+/// <param name="nrbytes">number byte to empty</param>
+/// <param name="type">number to empty to</param>
+void BytesTool::emptyBuffer(uchar* buffer, int bufferLength, int offset, int nrbytes, uchar type)
+{
+    for (int x = 0; (x < nrbytes) && ((x + offset) < bufferLength); x++)
+    {
+        buffer[offset + x] = type;
+    }
+}
 
 int BytesTool::convert_charset(const char* from_charset,
                                const char* to_charset,
@@ -117,6 +315,10 @@ int BytesTool::convert_charset(const char* from_charset,
                                char* dst_buf,
                                size_t* p_dst_len)
 {
+    /*
+    If you have opened the conversion descriptor without //TRANSLIT or //IGNORE,
+    then iconv() will return an error when the input character cannot be represented in the target character set.
+    */
     iconv_t icd = iconv_open(to_charset, from_charset);
 
     if ((iconv_t) - 1 == icd)
@@ -167,37 +369,5 @@ int BytesTool::convert_charset(const char* from_charset,
     iconv_close(icd);
     return 0;
 }
-/// <summary>
-/// Function to copy content of one buffer to another.
-/// </summary>
-/// <param name="dst">destination buffer</param>
-/// <param name="offdst">offset in destination buffer</param>
-/// <param name="src">source buffer</param>
-/// <param name="offsrc">offset in source buffer</param>
-/// <param name="length">number bytes to copy</param>
-int BytesTool::copy(uchar* dst, int dstLength, int offdst, const uchar* src, int srcLength, int offsrc, int length)
-{
-    int loper = 0;
 
-    for (; (loper < length) && ((offdst + loper) < dstLength) && ((offsrc + loper) < srcLength); loper++)
-    {
-        dst[offdst + loper] = src[offsrc + loper];
-    }
-
-    return loper;
-}
-/// <summary>
-/// Function to empty a buffer to a defined number.
-/// </summary>
-/// <param name="buffer">destination buffer</param>
-/// <param name="offset">offset in buffer</param>
-/// <param name="nrbytes">number byte to empty</param>
-/// <param name="type">number to empty to</param>
-void BytesTool::emptyBuffer(uchar* buffer, int bufferLength, int offset, int nrbytes, uchar type)
-{
-    for (int x = 0; (x < nrbytes) && ((x + offset) < bufferLength); x++)
-    {
-        buffer[offset + x] = type;
-    }
-}
 }

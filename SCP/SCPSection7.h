@@ -13,13 +13,14 @@ class SCPExtraMeasurements
 {
 public:
     SCPExtraMeasurements();
+    ~SCPExtraMeasurements();
     /// <summary>
     /// Function to read SCP extra measurements.
     /// </summary>
     /// <param name="buffer">byte array to read from</param>
     /// <param name="offset">position to start reading</param>
     /// <returns>0 on success</returns>
-
+    int Read(uchar* buffer, int bufferLength, int offset);
     /// <summary>
     /// Function to write SCP extra measurements.
     /// </summary>
@@ -47,10 +48,8 @@ public:
     ushort QTc;
     uchar FormulaType;
     ushort TaggedFieldSize;
-#if 0
     // Tagged Field are not implemented.
     uchar* TaggedFields;
-#endif
 };
 /// <summary>
 /// Class contains section 7 (contains the global measurements section).
@@ -63,8 +62,10 @@ public:
     ~SCPSection7();
     ushort getSectionID();
     bool Works();
+    int getGlobalMeasurements(GlobalMeasurements& mes);
     int setGlobalMeasurements(GlobalMeasurements& mes);
 protected:
+    int _Read(uchar* buffer, int bufferLength, int offset);
     int _Write(uchar* buffer, int bufferLength, int offset);
     void _Empty();
     int _getLength();
@@ -110,6 +111,7 @@ private:
 
     // Manufactor specific block (Not implemented, because UNIPRO doesn't store this kind of info).
     uchar* _Rest ;
+    int _RestLength;
 };
 }
 }

@@ -11,7 +11,12 @@ namespace ECGLeadMeasurements
 /// </summary>
 class ILeadMeasurement
 {
-public:
+    /// <summary>
+    /// Function to get the lead measurements of ECG.
+    /// </summary>
+    /// <param name="mes">lead measurements</param>
+    /// <returns>0 on success</returns>
+    virtual int getLeadMeasurements(LeadMeasurements& mes) = 0;
     /// <summary>
     /// Function to set the lead measurements of ECG.
     /// </summary>

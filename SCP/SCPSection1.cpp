@@ -627,7 +627,26 @@ int SCPSection1::setLanguageSupportCode(const std::string& enc)
 
     return ret;
 }
+/// <summary>
+/// Function to get Protocol Compatability Level.
+/// </summary>
+/// <param name="pc">Protocol Compatability Level</param>
+/// <returns>0 on succes</returns>
+int SCPSection1::getProtocolCompatibilityLevel(ProtocolCompatibility& pc)
+{
+    pc = 0;
+    int p = _SearchField(14);
 
+    if ((p >= 0)
+        && (_Fields[p].Value != null)
+        && (_Fields[p].Length > 15))
+    {
+        pc = (ProtocolCompatibility) _Fields[p].Value[15];
+        return 0;
+    }
+
+    return 1;
+}
 /// <summary>
 /// Function to set Protocol Compatability Level.
 /// </summary>
@@ -649,7 +668,25 @@ int SCPSection1::setProtocolCompatibilityLevel(ProtocolCompatibility pc)
     SCP_PE("ProtocolCompatibilityLevel:%d\n", pc);
     return 1;
 }
+/// <summary>
+/// Function to get a text from a certain tag.
+/// </summary>
+/// <param name="tag">id of tag</param>
+/// <param name="text">a string</param>
+/// <returns>0 on success</returns>
+string SCPSection1::getText(uchar tag)//TODO
+{
+    int p = _SearchField(tag);
 
+    if ((p >= 0)
+        && (_Fields[p].Value != null)
+        /*&&  (_Fields[p].Length <= _Fields[p].Value.Length)*/)//TODO检查长度限制
+    {
+        return BytesTool::readString(_Encoding, _Fields[p].Value, _Fields[p].Length, 0, _Fields[p].Length);;
+    }
+
+    return "";
+}
 /// <summary>
 /// Function to set a text from a cetain tag.
 /// </summary>
@@ -674,14 +711,29 @@ int SCPSection1::setText(uchar tag, const string& text)
 }
 
 // Getting Demographics information
+string SCPSection1::getLastName()
+{
+    return getText(0);
+}
+
 void SCPSection1::setLastName(const string& value)
 {
     setText(0, value);
 }
 
+string SCPSection1::getFirstName()
+{
+    return getText(1);
+}
+
 void SCPSection1::setFirstName(const string& value)
 {
     setText(1, value);
+}
+
+string SCPSection1::getPatientID()
+{
+    return getText(2);
 }
 
 void SCPSection1::setPatientID(const string& value)
@@ -690,9 +742,77 @@ void SCPSection1::setPatientID(const string& value)
     setText(2, value);
 }
 
+string SCPSection1::getSecondLastName()
+{
+    return getText(3);
+}
+
 void SCPSection1::setSecondLastName(const string& value)
 {
     setText(3, value);
+}
+
+string SCPSection1::getPrefixName()
+{
+    return string("");
+}
+
+void SCPSection1::setPrefixName(const string& value)
+{
+}
+
+string SCPSection1::getSuffixName()
+{
+    return string("");
+}
+
+void SCPSection1::setSuffixName(const string& value)
+{
+}
+
+int SCPSection1::getPatientAge(ushort& val, AgeDefinition& def)
+{
+    val = 0;
+    def = kAgeUnspecified;
+    int p = _SearchField(4);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 3)
+        && (_Fields[p].Value != null))
+    {
+        val = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
+
+        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
+        {
+            case 1:
+                def = kAgeYears;
+                break;
+
+            case 2:
+                def = kAgeMonths;
+                break;
+
+            case 3:
+                def = kAgeWeeks;
+                break;
+
+            case 4:
+                def = kAgeDays;
+                break;
+
+            case 5:
+                def = kAgeHours;
+                break;
+
+            default:
+                def = kAgeUnspecified;
+                break;
+        }
+
+        return (val == 0) && (def == kAgeUnspecified) ? 2 : 0;
+    }
+
+    return 1;
 }
 
 int SCPSection1::setPatientAge(ushort val, AgeDefinition def)
@@ -705,6 +825,23 @@ int SCPSection1::setPatientAge(ushort val, AgeDefinition def)
     BytesTool::writeBytes((uchar)def, field.Value, field.Length, sizeof(val), sizeof(uchar), true);
     SCP_PD("val:%d,AgeDef:%d\n", val, def);
     return Insert(field) << 1;
+}
+
+Date SCPSection1::getPatientBirthDate()
+{
+    int p = _SearchField(5);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 4)
+        && (_Fields[p].Value != null))
+    {
+        SCPDate scpdate = new SCPDate();
+        scpdate.Read(_Fields[p].Value, _Fields[p].Value, _Fields[p].Length, 0);
+        return Date(scpdate.Year, scpdate.Month, scpdate.Day);
+    }
+
+    SCP_PE("invalid PatientBirthDate\n");
+    return Date();//TODO返回默认构造是否合理
 }
 
 void SCPSection1::setPatientBirthDate(Date& PatientBirthDate)
@@ -728,6 +865,43 @@ void SCPSection1::setPatientBirthDate(Date& PatientBirthDate)
     SCP_PE("Year:%d,Month:%d,Day:%d\n", PatientBirthDate.Year, PatientBirthDate.Month, PatientBirthDate.Day);
 }
 
+int SCPSection1::getPatientHeight(ushort& val, HeightDefinition& def)
+{
+    val = 0;
+    def = kHeightUnspecified;
+    int p = _SearchField(6);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 3)
+        && (_Fields[p].Value != null))
+    {
+        val = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
+
+        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
+        {
+            case 1:
+                def = kHeightCentimeters;
+                break;
+
+            case 2:
+                def = kHeightInches;
+                break;
+
+            case 3:
+                def = kHeightMillimeters;
+                break;
+
+            default:
+                def = kHeightUnspecified;
+                break;
+        }
+
+        return (val == 0) && (def == kHeightUnspecified) ? 2 : 0;
+    }
+
+    return 1;
+}
+
 int SCPSection1::setPatientHeight(ushort val, HeightDefinition def)
 {
     SCPHeaderField field;
@@ -739,6 +913,47 @@ int SCPSection1::setPatientHeight(ushort val, HeightDefinition def)
     return Insert(field) << 1;
 }
 
+int SCPSection1::getPatientWeight(ushort& val, WeightDefinition& def)
+{
+    val = 0;
+    def = kWeightUnspecified;
+    int p = _SearchField(7);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 3)
+        && (_Fields[p].Value != null))
+    {
+        val = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
+
+        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
+        {
+            case 1:
+                def = kWeightKilogram;
+                break;
+
+            case 2:
+                def = kWeightGram;
+                break;
+
+            case 3:
+                def = kWeightPound;
+                break;
+
+            case 4:
+                def = kWeightOunce;
+                break;
+
+            default:
+                def = kWeightUnspecified;
+                break;
+        }
+
+        return (val == 0) && (def == kWeightUnspecified) ? 2 : 0;
+    }
+
+    return 1;
+}
+
 int SCPSection1::setPatientWeight(ushort val, WeightDefinition def)
 {
     SCPHeaderField field;
@@ -748,6 +963,30 @@ int SCPSection1::setPatientWeight(ushort val, WeightDefinition def)
     BytesTool::writeBytes(val, field.Value, field.Length, 0, sizeof(val), true);
     BytesTool::writeBytes((uchar)def, field.Value, field.Length, sizeof(val), sizeof(uchar), true);
     return Insert(field) << 1;
+}
+
+Sex SCPSection1::getGender()
+{
+    int p = _SearchField(8);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 1)
+        && (_Fields[p].Value != null))
+    {
+        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, 1, true))
+        {
+            case 1:
+                return kSexMale;
+
+            case 2:
+                return kSexFemale;
+
+            default:
+                return kSexUnspecified;
+        }
+    }
+
+    return kSexNull;
 }
 
 void SCPSection1::setGender(Sex Gender)
@@ -763,6 +1002,33 @@ void SCPSection1::setGender(Sex Gender)
     }
 }
 
+Race SCPSection1::getPatientRace()
+{
+    int p = _SearchField(9);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 1)
+        && (_Fields[p].Value != null))
+    {
+        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, 1, true))
+        {
+            case 1:
+                return kRaceCaucasian;
+
+            case 2:
+                return kRaceBlack;
+
+            case 3:
+                return kRaceOriental;
+
+            default:
+                return kRaceUnspecified;
+        }
+    }
+
+    return kRaceNull;
+}
+
 void SCPSection1::setPatientRace(Race PatientRace)
 {
     if (PatientRace != ECGDemographics::kRaceNull)
@@ -774,6 +1040,39 @@ void SCPSection1::setPatientRace(Race PatientRace)
         BytesTool::writeBytes((uchar)PatientRace, field.Value, field.Length, 0, sizeof(uchar), true);
         Insert(field);
     }
+}
+
+AcquiringDeviceID SCPSection1::getAcqMachineID()
+{
+    int p = _SearchField(14);
+
+    if ((p >= 0)
+        && (_Fields[p].Length >= 36)
+        && (_Fields[p].Value != null))
+    {
+        AcquiringDeviceID id = new AcquiringDeviceID();
+        int offset = 0;
+        id.InstitutionNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.InstitutionNr), true);
+        offset += sizeof(id.InstitutionNr);
+        id.DepartmentNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DepartmentNr), true);
+        offset += sizeof(id.DepartmentNr);
+        id.DeviceID = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceID), true);
+        offset += sizeof(id.DeviceID);
+        id.DeviceType = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceType), true);
+        offset += sizeof(id.DeviceType);
+        id.ManufactorID = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ManufactorID), true);
+        offset += sizeof(id.ManufactorID);
+        offset += BytesTool.copy(id.ModelDescription, 0, _Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ModelDescription));
+        // Skip some not needed info.
+        offset += 3;
+        id.DeviceCapabilities = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceCapabilities), true);
+        offset += sizeof(id.DeviceCapabilities);
+        id.ACFrequencyEnvironment = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ACFrequencyEnvironment), true);
+        offset += sizeof(id.ACFrequencyEnvironment);
+        return id;
+    }
+
+    return AcquiringDeviceID();
 }
 
 void SCPSection1::setAcqMachineID(const AcquiringDeviceID& id)
@@ -842,6 +1141,39 @@ void SCPSection1::setAcqMachineID(const AcquiringDeviceID& id)
     }
 }
 
+AcquiringDeviceID SCPSection1::getAnalyzingMachineID()
+{
+    int p = _SearchField(15);
+
+    if ((p >= 0)
+        && (_Fields[p].Length >= 36)
+        && (_Fields[p].Value != null))
+    {
+        AcquiringDeviceID id = new AcquiringDeviceID();
+        int offset = 0;
+        id.InstitutionNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.InstitutionNr), true);
+        offset += sizeof(id.InstitutionNr);
+        id.DepartmentNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DepartmentNr), true);
+        offset += sizeof(id.DepartmentNr);
+        id.DeviceID = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceID), true);
+        offset += sizeof(id.DeviceID);
+        id.DeviceType = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceType), true);
+        offset += sizeof(id.DeviceType);
+        id.ManufactorID = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ManufactorID), true);
+        offset += sizeof(id.ManufactorID);
+        offset += BytesTool.copy(id.ModelDescription, 0, _Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ModelDescription));
+        // Skip some not needed info.
+        offset += 3;
+        id.DeviceCapabilities = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceCapabilities), true);
+        offset += sizeof(id.DeviceCapabilities);
+        id.ACFrequencyEnvironment = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ACFrequencyEnvironment), true);
+        offset += sizeof(id.ACFrequencyEnvironment);
+        return id;
+    }
+
+    return AcquiringDeviceID();
+}
+
 void SCPSection1::setAnalyzingMachineID(const AcquiringDeviceID& id)
 {
     SCPHeaderField field;
@@ -902,6 +1234,38 @@ void SCPSection1::setAnalyzingMachineID(const AcquiringDeviceID& id)
     }
 }
 
+DateTime SCPSection1::getTimeAcquisition()
+{
+    DateTime time;
+    memset(&time, 0, sizeof(DateTime));
+    int p = _SearchField(25);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 4)
+        && (_Fields[p].Value != null))
+    {
+        SCPDate scpdate;
+        scpdate.Read(_Fields[p].Value, _Fields[p].Length, 0);
+        time.Year = scpdate.Year;
+        time.Month = scpdate.Month;
+        time.Day = scpdate.Day;
+        p = _SearchField(26);
+
+        if ((p >= 0)
+            && (_Fields[p].Length == 3)
+            && (_Fields[p].Value != null))
+        {
+            SCPTime scptime;
+            scptime.Read(_Fields[p].Value, _Fields[p].Length, 0);
+            time.Hour = scptime.Hour;
+            time.Minute = scptime.Min;
+            time.Second = scptime.Sec;
+        }
+    }
+
+    return time;
+}
+
 void SCPSection1::setTimeAcquisition(const DateTime& time)
 {
     if (time.Year > 1000)
@@ -935,6 +1299,20 @@ void SCPSection1::setTimeAcquisition(const DateTime& time)
     }
 }
 
+ushort SCPSection1::getBaselineFilter()
+{
+    int p = _SearchField(27);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 2)
+        && (_Fields[p].Value != null))
+    {
+        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+    }
+
+    return 0;
+}
+
 void SCPSection1::setBaselineFilter(ushort BaselineFilter)
 {
     SCPHeaderField field;
@@ -946,6 +1324,20 @@ void SCPSection1::setBaselineFilter(ushort BaselineFilter)
     SCP_PD("BaselineFilter:%u\n", BaselineFilter);
 }
 
+ushort SCPSection1::getLowpassFilter()
+{
+    int p = _SearchField(28);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 2)
+        && (_Fields[p].Value != null))
+    {
+        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+    }
+
+    return 0;
+}
+
 void SCPSection1::setLowpassFilter(ushort LowpassFilter)
 {
     SCPHeaderField field;
@@ -955,6 +1347,20 @@ void SCPSection1::setLowpassFilter(ushort LowpassFilter)
     BytesTool::writeBytes(LowpassFilter, field.Value, field.Length, 0, sizeof(LowpassFilter), true);
     Insert(field);
     SCP_PD("LowpassFilter:%u\n", LowpassFilter);
+}
+
+uchar SCPSection1::getFilterBitmap()
+{
+    int p = _SearchField(29);
+
+    if ((p >= 0)
+        && (_Fields[p].Length == 1)
+        && (_Fields[p].Value != null))
+    {
+        return (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(uchar), true);
+    }
+
+    return 0;
 }
 
 void SCPSection1::setFilterBitmap(uchar FilterBitmap)
@@ -970,6 +1376,38 @@ void SCPSection1::setFilterBitmap(uchar FilterBitmap)
         SCP_PD("LowpassFilter:%hhu\n", FilterBitmap);
         return;
     }
+}
+
+std::vector<string> SCPSection1::getFreeTextFields()
+{
+    std::vector<string> textVector;
+    int p = _SearchField(30);
+
+    if (p >= 0)
+    {
+        for (; (p > 0) && (_Fields[p - 1].Tag == 30); p--) {}
+
+        int len = 0;
+
+        for (; ((p + len) < _NrFields) && (_Fields[p + len].Tag == 30); len++) {}
+
+        if (len > 0)
+        {
+            for (int loper = 0; loper < len; loper++)
+            {
+                if (_Fields[p + loper].Value != null)
+                {
+                    textVector.push_back(BytesTool.readString(_Encoding,
+                                         _Fields[p + loper].Value,
+                                         _Fields[p + loper].Length,
+                                         0,
+                                         _Fields[p + loper].Length));
+                }
+            }
+        }
+    }
+
+    return textVector;
 }
 
 void SCPSection1::setFreeTextFields(const std::vector<string>& FreeTextFields)
@@ -992,9 +1430,19 @@ void SCPSection1::setFreeTextFields(const std::vector<string>& FreeTextFields)
     }
 }
 
+string SCPSection1::getSequenceNr()
+{
+    return getText(31);
+}
+
 void SCPSection1::setSequenceNr(const string& SequenceNr)
 {
     setText(31, SequenceNr);
+}
+
+string SCPSection1::getAcqInstitution()
+{
+    return getText(16);
 }
 
 void SCPSection1::setAcqInstitution(const string&  AcqInstitution)
@@ -1002,9 +1450,19 @@ void SCPSection1::setAcqInstitution(const string&  AcqInstitution)
     setText(16, AcqInstitution);
 }
 
+string SCPSection1::getAnalyzingInstitution()
+{
+    return getText(17);
+}
+
 void SCPSection1::setAnalyzingInstitution(const string&  AnalyzingInstitution)
 {
     setText(17, AnalyzingInstitution);
+}
+
+string SCPSection1::getAcqDepartment()
+{
+    return getText(18);
 }
 
 void SCPSection1::setAcqDepartment(const string&  AcqDepartment)
@@ -1012,9 +1470,19 @@ void SCPSection1::setAcqDepartment(const string&  AcqDepartment)
     setText(18, AcqDepartment);
 }
 
+string SCPSection1::getAnalyzingDepartment()
+{
+    return getText(19);
+}
+
 void SCPSection1::setAnalyzingDepartment(const string&  AnalyzingDepartment)
 {
     setText(19, AnalyzingDepartment);
+}
+
+string SCPSection1::getReferringPhysician()
+{
+    return getText(20);
 }
 
 void SCPSection1::setReferringPhysician(const string&  ReferringPhysician)
@@ -1022,14 +1490,36 @@ void SCPSection1::setReferringPhysician(const string&  ReferringPhysician)
     setText(20, ReferringPhysician);
 }
 
+string SCPSection1::getOverreadingPhysician()
+{
+    return getText(21);
+}
+
 void SCPSection1::setOverreadingPhysician(const string&  OverreadingPhysician)
 {
     setText(21, OverreadingPhysician);
 }
 
+string SCPSection1::getTechnicianDescription()
+{
+    return getText(22);
+}
+
 void SCPSection1::setTechnicianDescription(const string&  TechnicianDescription)
 {
     setText(22, TechnicianDescription);
+}
+
+ushort SCPSection1::getSystolicBloodPressure()
+{
+    int p = _SearchField(11);
+
+    if (p >= 0)
+    {
+        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+    }
+
+    return 0;
 }
 
 void SCPSection1::setSystolicBloodPressure(ushort SystolicBloodPressure)
@@ -1045,6 +1535,18 @@ void SCPSection1::setSystolicBloodPressure(ushort SystolicBloodPressure)
     }
 }
 
+ushort SCPSection1::getDiastolicBloodPressure()
+{
+    int p = _SearchField(12);
+
+    if (p >= 0)
+    {
+        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+    }
+
+    return 0;
+}
+
 void SCPSection1::setDiastolicBloodPressure(ushort DiastolicBloodPressure)
 {
     if (DiastolicBloodPressure != 0)
@@ -1056,6 +1558,43 @@ void SCPSection1::setDiastolicBloodPressure(ushort DiastolicBloodPressure)
         BytesTool::writeBytes(DiastolicBloodPressure, field.Value, field.Length, 0, field.Length, true);
         Insert(field);
     }
+}
+
+std::vector<Drug> SCPSection1::getsetDrugs()
+{
+    std::vector<Drug> drugVector;
+    int p = _SearchField(10);
+
+    if (p >= 0)
+    {
+        for (; (p > 0) && (_Fields[p - 1].Tag == 10); p--) {}
+
+        int len = 0;
+
+        for (; ((p + len) < _NrFields) && (_Fields[p + len].Tag == 10); len++) {}
+
+        if (len > 0)
+        {
+            for (int loper = 0; loper < len; loper++)
+            {
+                if ((_Fields[p + loper].Length > 3)
+                    && (_Fields[p + loper].Value != null))
+                {
+                    Drug drug;
+                    drug.DrugClass = _Fields[p + loper].Value[1];
+                    drug.ClassCode = _Fields[p + loper].Value[2];
+                    drug.TextDesciption = BytesTool.readString(_Encoding,
+                                          _Fields[p + loper].Value,
+                                          _Fields[p + loper].Length,
+                                          3,
+                                          _Fields[p + loper].Length - 3);
+                    drugVector.push_back(drug);
+                }
+            }
+        }
+    }
+
+    return drugVector;
 }
 
 void SCPSection1::setDrugs(std::vector<Drug>& Drugs)
@@ -1074,6 +1613,39 @@ void SCPSection1::setDrugs(std::vector<Drug>& Drugs)
         BytesTool::writeString(_Encoding, Drugs[loper].TextDesciption, field.Value, field.Length, 3, field.Length - 3);
         Insert(field);
     }
+}
+
+std::vector<string> SCPSection1::getReferralIndication()
+{
+    std::vector<string> textVector;
+    int p = _SearchField(13);
+
+    if (p >= 0)
+    {
+        for (; (p > 0) && (_Fields[p - 1].Tag == 13); p--) {}
+
+        int len = 0;
+
+        for (; ((p + len) < _NrFields) && (_Fields[p + len].Tag == 13); len++) {}
+
+        if (len < 0)
+        {
+            for (int loper = 0; loper < len; loper++)
+            {
+                if ((_Fields[p + loper].Value != null)
+                    && (_Fields[p + loper].Length <= _Fields[p + loper].Value.Length))
+                {
+                    textVector.push_back(BytesTool.readString(_Encoding,
+                                         _Fields[p + loper].Value,
+                                         _Fields[p + loper].Length,
+                                         0,
+                                         _Fields[p + loper].Length));
+                }
+            }
+        }
+    }
+
+    return textVector;
 }
 
 void SCPSection1::setReferralIndication(const std::vector<string>& ReferralIndication)
@@ -1095,9 +1667,28 @@ void SCPSection1::setReferralIndication(const std::vector<string>& ReferralIndic
     }
 }
 
+string SCPSection1::getRoomDescription()
+{
+    return getText(23);
+}
+
 void SCPSection1::setRoomDescription(const string& RoomDescription)
 {
     setText(23, RoomDescription);
+}
+
+uchar SCPSection1::getStatCode()
+{
+    int p = _SearchField(24);
+
+    if ((p >= 0)
+        && (_Fields[p].Value != null)
+        && (_Fields[p].Length == sizeof(uchar)))
+    {
+        return (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(uchar), true);
+    }
+
+    return 0xff;
 }
 
 void SCPSection1::setStatCode(uchar StatCode)

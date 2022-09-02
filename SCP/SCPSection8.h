@@ -23,6 +23,8 @@ class SCPSection8 : public SCPSection,  public IDiagnostic
 {
 public:
     SCPSection8();
+    // getting diagnositc information.
+    int getDiagnosticStatements(Statements& stat);
     // setting diagnositc information.
     int setDiagnosticStatements(Statements& stat);
     bool Works();

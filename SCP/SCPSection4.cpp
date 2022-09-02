@@ -40,6 +40,29 @@ public:
         Fiducial = fiducial;
         End = end;
     }
+    /// <summary>
+    /// Function to read QRS Subtraction.
+    /// </summary>
+    /// <param name="buffer">byte array to read QRS subtraction.</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if (offset + Size > bufferLength)
+        {
+            return 0x1;
+        }
+
+        Type = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Type), true);
+        offset += sizeof(Type);
+        Start = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Start), true);
+        offset += sizeof(Start);
+        Fiducial = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Fiducial), true);
+        offset += sizeof(Fiducial);
+        End = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(End), true);
+        offset += sizeof(End);
+        return 0x0;
+    }
 
     /// <summary>
     /// Function to write QRS Subtraction zone.
@@ -98,6 +121,25 @@ public:
         Start = start;
         End = end;
     }
+    /// <summary>
+    /// Function to read QRS protected zone.
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if (offset + Size > bufferLength)
+        {
+            return 0x1;
+        }
+
+        Start = (int) BytesTool::readBytes(buffer, offset, sizeof(Start), true);
+        offset += sizeof(Start);
+        End = (int) BytesTool::readBytes(buffer, offset, sizeof(End), true);
+        offset += sizeof(End);
+        return 0x0;
+    }
 
     /// <summary>
     /// Function to write QRS protected zone.
@@ -142,6 +184,64 @@ SCPSection4::SCPSection4()
     _Subtraction.clear();
     _Protected.clear();
 }
+
+int SCPSection4::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    int end = offset - Size + Length;
+
+    if ((offset + sizeof(_MedianDataLength) + sizeof(_FirstFiducial) + sizeof(_NrQRS)) > end)
+    {
+        return 0x1;
+    }
+
+    _MedianDataLength = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_MedianDataLength), true);
+    offset += sizeof(_MedianDataLength);
+    _FirstFiducial = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_FirstFiducial), true);
+    offset += sizeof(_FirstFiducial);
+    _NrQRS = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_NrQRS), true);
+    offset += sizeof(_NrQRS);
+
+    if ((offset + (_NrQRS * SCPQRSSubtraction::Size)) > end)
+    {
+        return 0x2;
+    }
+
+    _Subtraction.resize(_NrQRS);
+
+    for (int loper = 0; loper < _NrQRS; loper++)
+    {
+        int err = _Subtraction[loper].Read(buffer, bufferLength, offset);
+
+        if (err != 0)
+        {
+            return err << (2 + loper);
+        }
+
+        offset += SCPQRSSubtraction::Size;
+    }
+
+    if ((offset + (_NrQRS * SCPQRSProtected::Size)) > end)
+    {
+        return 0x0;
+    }
+
+    _Protected.resize(_NrQRS);
+
+    for (int loper = 0; loper < _NrQRS; loper++)
+    {
+        int err = _Protected[loper].Read(buffer, bufferLength, offset);
+
+        if (err != 0)
+        {
+            return err << (2 + loper);
+        }
+
+        offset += SCPQRSProtected::Size;
+    }
+
+    return 0x0;
+}
+
 int SCPSection4::_Write(uchar* buffer, int bufferLength, int offset)
 {
     BytesTool::writeBytes(_MedianDataLength, buffer, bufferLength, offset, sizeof(_MedianDataLength), true);
@@ -382,6 +482,68 @@ int SCPSection4::SubtractMedians(SCPSection3 definition, short[][] rhythm, short
 }
 #endif
 /// <summary>
+/// Function to get nr of protected zones.
+/// </summary>
+/// <returns>nr of protected zones</returns>
+public int getNrProtectedZones()
+{
+    return (_Protected != null ? _Protected.Length : 0);
+}
+/// <summary>
+/// Function to get start of protected zone.
+/// </summary>
+/// <param name="nr">nr of protected zone</param>
+/// <returns>start sample nr of protected zone</returns>
+public int getProtectedStart(int nr)
+{
+    if ((_Protected != null)
+        && (nr >= 0)
+        && (nr < _Protected.Length))
+    {
+        return _Protected[nr].Start;
+    }
+
+    return -1;
+}
+/// <summary>
+/// Function to get end of protected zone.
+/// </summary>
+/// <param name="nr">nr of protected zone</param>
+/// <returns>end sample nr of protected zone</returns>
+public int getProtectedEnd(int nr)
+{
+    if ((_Protected != null)
+        && (nr >= 0)
+        && (nr < _Protected.Length))
+    {
+        return _Protected[nr].End;
+    }
+
+    return -1;
+}
+/// <summary>
+/// Function to get length of protected zone.
+/// </summary>
+/// <param name="nr">nr of protected zone</param>
+/// <returns>length of protected zone in samples</returns>
+public int getProtectedLength(int nr)
+{
+    if ((_Protected != null)
+        && (nr >= 0)
+        && (nr < _Protected.Length))
+    {
+        if (_Protected[nr] == null)
+        {
+            return 0;
+        }
+
+        int templen = _Protected[nr].End - _Protected[nr].Start;
+        return (templen > 0 ? templen + 1 : 0);
+    }
+
+    return -1;
+}
+/// <summary>
 /// Function to set protected zones using global measurements.
 /// </summary>
 /// <param name="global">global measurments</param>
@@ -448,6 +610,38 @@ void SCPSection4::setProtected(GlobalMeasurements& global, int medianFreq, int r
         }
     }
 }
+
+// Signal Manupalations
+int SCPSection4::getSignals(Signals& signals)
+{
+    if (Works())
+    {
+        signals.MedianLength = _MedianDataLength;
+        signals.MedianFiducialPoint = _FirstFiducial;
+
+        if (_NrQRS == 0)
+        {
+            signals.QRSZone.clear();
+        }
+        else
+        {
+            signals.QRSZone.resize(_NrQRS);
+
+            for (int loper = 0; loper < _NrQRS; loper++)
+            {
+                signals.QRSZone[loper].Type = _Subtraction[loper].Type;
+                signals.QRSZone[loper].Start = _Subtraction[loper].Start - 1;
+                signals.QRSZone[loper].Fiducial = _Subtraction[loper].Fiducial;
+                signals.QRSZone[loper].End = _Subtraction[loper].End;
+            }
+        }
+
+        return 0;
+    }
+
+    return 1;
+}
+
 int SCPSection4::setSignals(Signals& signals)
 {
     if (signals.getNrLeads() != 0)

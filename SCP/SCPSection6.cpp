@@ -134,6 +134,187 @@ void SCPSection6::setNrLeads(ushort nrleads)
     _NrLeads = nrleads;
 }
 /// <summary>
+/// Function to decode data in this section.
+/// </summary>
+/// <param name="tables">Huffman table to use during deconding</param>
+/// <param name="leadDefinition"></param>
+/// <returns>decoded leads</returns>
+short[][] SCPSection6::DecodeData(SCPSection2* tables,
+                                  SCPSection3* leadDefinition,
+                                  SCPSection4* qrsLocations,
+                                  int medianFreq)
+{
+    int localFreq = getSamplesPerSecond();
+
+    if (Works()
+        && (tables != null)
+        && (tables.Works())
+        && (leadDefinition != null)
+        && (leadDefinition.Works())
+        && (leadDefinition.getNrLeads() == _Data.Length)
+        && (localFreq > 0))
+    {
+        if ((medianFreq <= 0)
+            || (medianFreq == localFreq))
+        {
+            medianFreq = 1;
+            localFreq = 1;
+        }
+
+        if ((medianFreq < localFreq)
+            &&  !leadDefinition.isMediansUsed()
+            && (_Bimodal == 0x0))
+        {
+            medianFreq = localFreq;
+        }
+
+        if (((medianFreq % localFreq) != 0)
+            || ((medianFreq / localFreq) < 1)
+            || ((medianFreq / localFreq) > 4))
+        {
+            // make an exception for ECGs that don't use compression (like corpuls ECGs that are in violation of this rule).
+            if (_Bimodal == 0x0)
+            {
+                medianFreq = localFreq;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        if ((_Bimodal == 0x1)
+            && (qrsLocations == null))
+        {
+            return null;
+        }
+
+        // Reset selected table.
+        tables.ResetSelect();
+        short[][] leads = new short[_Data.Length][];
+
+        for (int loper = 0; loper < _Data.Length; loper++)
+        {
+            int time = (leadDefinition.getLeadLength(loper) * localFreq) / medianFreq;
+
+            // Bimodal part might be buggy unable to test.
+            if ((localFreq != medianFreq)
+                && (_Bimodal == 0x1))
+            {
+                int rate = medianFreq / localFreq;
+                // Calculate nr of samples stored in section.
+                time = 0;
+                int nrzones = qrsLocations.getNrProtectedZones();
+
+                for (int zone = 0; zone < nrzones; zone++)
+                {
+                    int begin = (qrsLocations.getProtectedStart(zone) >= leadDefinition.getLeadStart(loper) ? qrsLocations.getProtectedStart(zone) : leadDefinition.getLeadStart(loper));
+                    int end = (qrsLocations.getProtectedEnd(zone) <= leadDefinition.getLeadEnd(loper) ? qrsLocations.getProtectedEnd(zone) : leadDefinition.getLeadEnd(loper));
+                    begin = (end > begin ? end - begin + 1 : 0);
+                    time += begin + (rate - (begin % rate));
+                }
+
+                time += ((leadDefinition.getLeadLength(loper) - time) * localFreq) / medianFreq;
+            }
+
+            leads[loper] = tables.Decode(_Data[loper], 0, _Data[loper].Length, time, _Difference);
+
+            // Check if lead was decoded
+            if (leads[loper] == null)
+            {
+                // return if lead decode failed.
+                return null;
+            }
+
+            if (localFreq != medianFreq)
+            {
+                int rate = medianFreq / localFreq;
+
+                if (_Bimodal == 0x1)
+                {
+                    int beginNonProtected = 0;
+                    int endNonProtected = qrsLocations.getProtectedStart(0);
+                    // Restructure bimodal data to length set in Section3.
+                    short[] temp = new short[leadDefinition.getLeadLength(loper)];
+                    int time1Offset = leadDefinition.getLeadStart(loper);
+                    int time1 = 0;
+                    int time2 = 0;
+                    int zone = 0;
+
+                    while ((time1 < temp.Length)
+                           && (time2 < leads[loper].Length))
+                    {
+                        if (((time1 + time1Offset) >= beginNonProtected)
+                            && ((time1 + time1Offset) < endNonProtected))
+                        {
+                            for (int begin = 0; begin < (rate >> 1); begin++)
+                            {
+                                temp[time1++] = leads[loper][time2];
+                            }
+
+                            if ((time2 + ((endNonProtected - (time1 + time1Offset)) / rate)) >= leads[loper].Length)
+                            {
+                                endNonProtected -= ((time2 + ((endNonProtected - (time1 + time1Offset)) / rate)) - leads[loper].Length) * rate;
+                            }
+
+                            endNonProtected -= rate + (rate >> 1);
+
+                            while ((time1 + time1Offset) < endNonProtected)
+                            {
+                                for (int i = 0; (i < rate) && (time1 < temp.Length); i++)
+                                {
+                                    temp[time1++] = (short)(((leads[loper][time2 + 1] - leads[loper][time2]) / rate) * i + leads[loper][time2]);
+                                }
+
+                                time2++;
+                            }
+
+                            endNonProtected += rate + (rate >> 1);
+
+                            for (int end = 0; end < (rate >> 1); end++)
+                            {
+                                temp[time1++] = leads[loper][time2];
+                            }
+
+                            time2++;
+                            beginNonProtected = (zone == qrsLocations.getNrProtectedZones() ? temp.Length : qrsLocations.getProtectedEnd(zone));
+                        }
+                        else
+                        {
+                            // This should never happen!!
+                            if (zone == qrsLocations.getNrProtectedZones())
+                            {
+                                break;
+                            }
+
+                            while (((time1 + time1Offset) < qrsLocations.getProtectedEnd(zone))
+                                   && (time1 < temp.Length)
+                                   && (time2 < leads[loper].Length))
+                            {
+                                temp[time1++] = leads[loper][time2++];
+                            }
+
+                            zone++;
+                            endNonProtected = (zone == qrsLocations.getNrProtectedZones() ? temp.Length : qrsLocations.getProtectedStart(zone));
+                        }
+                    }
+
+                    leads[loper] = temp;
+                }
+                else
+                {
+                    ECGTool.ResampleLead(leads[loper], localFreq, medianFreq, out leads[loper]);
+                }
+            }
+        }
+
+        return leads;
+    }
+
+    return null;
+}
+
+/// <summary>
 /// Function to encode data in this section.
 /// </summary>
 /// <param name="data">Rhythm data to encode</param>

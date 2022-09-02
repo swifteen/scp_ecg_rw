@@ -15,7 +15,8 @@ Signal::Signal()
     RhythmEnd = 0;
     Rhythm = null;
     RhythmLength = 0;
-    //Median = null;
+    Median = null;
+    MedianLength = 0;
 }
 /// <summary>
 /// Function to make a deep copy of this object.
@@ -28,7 +29,8 @@ Signal::Signal(const Signal& rhs)
     RhythmEnd = 0;
     Rhythm = null;
     RhythmLength = 0;
-    //Median = null;
+    Median = null;
+    MedianLength = 0;
     deepCopy(rhs);
 }
 
@@ -40,6 +42,9 @@ Signal& Signal::operator=(const Signal& rhs)
         delete[] this->Rhythm;
         this->Rhythm = null;
         RhythmLength = 0;
+        delete[] this->Median;
+        this->Median = null;
+        MedianLength = 0;
         deepCopy(rhs);
     }
 
@@ -49,6 +54,7 @@ Signal& Signal::operator=(const Signal& rhs)
 Signal::~Signal()
 {
     delete[] Rhythm;
+    delete[] Median;
     //  SCP_PD("Type[%d]\n",(int)Type);
 }
 
@@ -66,6 +72,18 @@ void Signal::deepCopy(const Signal& rhs)
         if (this->Rhythm != null)
         {
             memcpy(this->Rhythm, rhs.Rhythm, rhs.RhythmLength);
+        }
+    }
+
+    this->MedianLength = rhs.MedianLength;
+
+    if ((rhs.MedianLength > 0) && (rhs.Median != null))
+    {
+        this->Median = new short[rhs.MedianLength];
+
+        if (this->Median != null)
+        {
+            memcpy(this->Median, rhs.Median, rhs.MedianLength);
         }
     }
 }

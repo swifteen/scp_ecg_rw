@@ -12,14 +12,12 @@ namespace ECGGlobalMeasurements
 class IGlobalMeasurement
 {
 public:
-#if 0
     /// <summary>
     /// Function to get the global measurements of ECG.
     /// </summary>
     /// <param name="mes">global measurements</param>
     /// <returns>0 on success</returns>
-    virtual int getGlobalMeasurements(out GlobalMeasurements mes) = 0;
-#endif
+    virtual int getGlobalMeasurements(GlobalMeasurements& mes) = 0;
     /// <summary>
     /// Function to set the global measurements of ECG.
     /// </summary>

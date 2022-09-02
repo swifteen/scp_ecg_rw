@@ -81,6 +81,33 @@ bool BytesTool::writeBytes(long values, uchar* buffer,int bufferLength, int offs
 }
 ```
 
+## C#中特殊get语法
+
+```c#
+		public Signal this[int i]
+		{
+			get
+			{
+				return ((_Lead != null) && (i < _Lead.Length)) ? _Lead[i] : null;
+			}
+			set
+			{
+				_Lead[i] = value;
+			}
+		}
+```
+
+转换为C++代码如下
+
+```c++
+Signal& Signals::operator[](int i)
+{
+    return ((_Lead.size() > 0) && (i < _Lead.size())) ? _Lead[i] : _Lead[0];
+}
+```
+
+
+
 ## 类型定义和公共的头文件处理
 
 ScpGlobal.h文件如下，用来定义类型和包含公共的头文件

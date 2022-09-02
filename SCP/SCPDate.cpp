@@ -34,7 +34,27 @@ SCPDate::SCPDate(int year, int month, int day)
     Month = (uchar) month;
     Day = (uchar) day;
 }
+/// <summary>
+/// Function to read an SCP date from byte array.
+/// </summary>
+/// <param name="buffer">byte array to read from</param>
+/// <param name="offset">position to start reading</param>
+/// <returns>0 on success</returns>
+int SCPDate::Read(uchar* buffer, int bufferLength, int offset)
+{
+    if ((offset + Size) > bufferLength)
+    {
+        return 0x1;
+    }
 
+    Year = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Year), true);
+    offset += sizeof(Year);
+    Month = (byte) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Month), true);
+    offset += sizeof(Month);
+    Day = (byte) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Day), true);
+    offset += sizeof(Day);
+    return 0x0;
+}
 /// <summary>
 /// Function to write an SCP date to a byte array.
 /// </summary>

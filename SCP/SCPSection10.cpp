@@ -126,6 +126,44 @@ public:
             }
         }
     }
+    /// <summary>
+    /// Function to read SCP statement from SCP statement.
+    /// </summary>
+    /// <param name="buffer">byte array</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if ((offset + sizeof(_LeadId) + sizeof(_LeadLength)) > bufferLength)
+        {
+            return 0x1;
+        }
+
+        int fieldSize = sizeof(_LeadId);
+        _LeadId = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, fieldSize, true);
+        offset += fieldSize;
+        fieldSize = sizeof(_LeadLength);
+        _LeadLength = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, fieldSize, true);
+        offset += fieldSize;
+
+        if (_Measurements != null)
+        {
+            if ((offset + _LeadLength) > bufferLength)
+            {
+                return 0x2;
+            }
+
+            fieldSize = sizeof(short);
+
+            for (int i = 0; i < _MeasurementsLength; i++)
+            {
+                _Measurements[i] = (short) BytesTool::readBytes(buffer, bufferLength, offset, fieldSize, true);
+                offset += fieldSize;
+            }
+        }
+
+        return 0x0;
+    }
 
     /// <summary>
     /// Function to write SCP statement.
@@ -216,6 +254,43 @@ ushort SCPSection10::getNrLeads()
 void SCPSection10::setNrLeads(ushort NrLeads)
 {
     (NrLeads == 0) ? _LeadMeasurements.clear() : _LeadMeasurements.resize(NrLeads);
+}
+
+int SCPSection10::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    int startsize = sizeof(_NrLeads) + sizeof(_ManufactorSpecific);
+    int end = offset - Size + Length;
+
+    if ((offset + startsize) > end)
+    {
+        return 0x1;
+    }
+
+    int fieldSize = sizeof(_NrLeads);
+    _NrLeads = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, fieldSize, true);
+    offset += fieldSize;
+    fieldSize = sizeof(_ManufactorSpecific);
+    _ManufactorSpecific = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, fieldSize, true);
+    offset += fieldSize;
+
+    if (_LeadMeasurements.size() == 0)
+    {
+        return 0x0;
+    }
+
+    for (int i = 0; i < _LeadMeasurements.size(); i++)
+    {
+        int ret = _LeadMeasurements[i].Read(buffer, bufferLength, offset);
+
+        if (ret != 0)
+        {
+            return ret;
+        }
+
+        offset += _LeadMeasurements[i].getLength();
+    }
+
+    return 0x0;
 }
 
 int SCPSection10::_Write(uchar* buffer, int bufferLength, int offset)
@@ -310,6 +385,30 @@ bool SCPSection10::Works()
     }
 
     return true;
+}
+
+int SCPSection10::getLeadMeasurements(LeadMeasurements& mes)
+{
+    if (_NrLeads != 0)
+    {
+        int nrLeads = _NrLeads;
+        mes = LeadMeasurements(nrLeads);
+
+        for (int i = 0; i < nrLeads; i++)
+        {
+            mes.Measurements[i].LeadType = _LeadMeasurements[i].LeadId;
+            int len = _LeadMeasurements[i].Count;
+
+            for (int j = 0; j < len; j++)
+            {
+                mes.Measurements[i][(MeasurementType) j] = _LeadMeasurements[i][j];
+            }
+        }
+
+        return 0;
+    }
+
+    return 1;
 }
 
 int SCPSection10::setLeadMeasurements(LeadMeasurements& mes)

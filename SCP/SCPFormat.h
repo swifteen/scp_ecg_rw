@@ -54,6 +54,8 @@ public:
 
     bool Works();
     void Empty();
+    // Signal Manupalations
+    int getSignals(Signals& signals);
     int setSignals(Signals& signals);
 
     /// <summary>

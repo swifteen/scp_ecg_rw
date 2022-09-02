@@ -20,7 +20,13 @@ public:
     /// <param name="min">number of minute</param>
     /// <param name="sec">number of second</param>
     SCPTime(int hour, int min, int sec);
-
+    /// <summary>
+    /// Function to read an SCP time.
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset);
     /// <summary>
     /// Function to write SCP time.
     /// </summary>

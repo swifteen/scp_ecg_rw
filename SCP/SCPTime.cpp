@@ -32,6 +32,28 @@ SCPTime::SCPTime(int hour, int min, int sec)
 }
 
 /// <summary>
+/// Function to read an SCP time.
+/// </summary>
+/// <param name="buffer">byte array to read from</param>
+/// <param name="offset">position to start reading</param>
+/// <returns>0 on success</returns>
+int SCPTime::Read(uchar* buffer, int bufferLength, int offset)
+{
+    if ((offset + Size) > bufferLength)
+    {
+        return 0x1;
+    }
+
+    Hour = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Hour), true);
+    offset += sizeof(Hour);
+    Min = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Min), true);
+    offset += sizeof(Min);
+    Sec = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Sec), true);
+    offset += sizeof(Sec);
+    return 0x0;
+}
+
+/// <summary>
 /// Function to write SCP time.
 /// </summary>
 /// <param name="buffer">byte array to write into</param>

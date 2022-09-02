@@ -14,6 +14,7 @@ namespace SCP
 /// </summary>
 class SCPHuffmanStruct
 {
+public:
     SCPHuffmanStruct()
     {}
     SCPHuffmanStruct(uchar prefix, uchar entire, uchar tablemode, short value, uint code)
@@ -23,6 +24,41 @@ class SCPHuffmanStruct
         this->tablemode = tablemode;
         this->value = value;
         this->code = code;
+    }
+    /// <summary>
+    /// Function to read an SCP huffman struct.
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if ((offset + Size) > buffer.Length)
+        {
+            return 0x1;
+        }
+
+        prefix = (uchar) BytesTool.readBytes(buffer, offset, sizeof(prefix), true);
+        offset += sizeof(prefix);
+        entire = (uchar) BytesTool.readBytes(buffer, offset, sizeof(entire), true);
+        offset += sizeof(entire);
+        tablemode = (uchar) BytesTool.readBytes(buffer, offset, sizeof(tablemode), true);
+        offset += sizeof(tablemode);
+        value = (short) BytesTool.readBytes(buffer, offset, sizeof(value), true);
+        offset += sizeof(value);
+        uint tempCode = (uchar) BytesTool.readBytes(buffer, offset, sizeof(code), true);
+        offset += sizeof(code);
+        // Have to reverse the code, because SCP stores it that way.
+        code = 0;
+
+        for (int loper = prefix; loper > 0; loper--)
+        {
+            code <<= 1;
+            code |= (tempCode & 0x1);
+            tempCode >>= 1;
+        }
+
+        return 0x0;
     }
 
     /// <summary>
@@ -95,6 +131,60 @@ SCPSection2::SCPSection2()
 #if 0 //use DefaultTable
     _Tables = null;
 #endif
+}
+
+int SCPSection2::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    int end = offset - Size + Length;
+
+    if ((offset + sizeof(_NrTables)) > end)
+    {
+        return 0x1;
+    }
+
+    _NrTables = (ushort) BytesTool.readBytes(buffer, offset, sizeof(_NrTables), true);
+    offset += sizeof(_NrTables);
+
+    if (_NrTables < _DefaultTable)
+    {
+#if 0 //TODO
+        _Tables = new SCPHuffmanStruct[_NrTables][];
+
+        for (int table = 0; table < _NrTables; table++)
+        {
+            if ((offset + sizeof(_NrTables)) > end)
+            {
+                _Empty();
+                return 0x2;
+            }
+
+            _Tables[table] = new SCPHuffmanStruct[BytesTool.readBytes(buffer, offset, sizeof(_NrTables), true)];
+            offset += sizeof(_NrTables);
+
+            if ((offset + (_Tables[table].Length * SCPHuffmanStruct.Size)) > end)
+            {
+                _Empty();
+                return 0x4;
+            }
+
+            for (int loper = 0; loper < _Tables[table].Length; loper++)
+            {
+                _Tables[table][loper] = new SCPHuffmanStruct();
+                int err = _Tables[table][loper].Read(buffer, offset);
+
+                if (err != 0)
+                {
+                    return err << 3 + table;
+                }
+
+                offset += SCPHuffmanStruct.Size;
+            }
+        }
+
+#endif
+    }
+
+    return 0x0;
 }
 
 int SCPSection2::_Write(uchar* buffer, int bufferLength, int offset)
@@ -195,7 +285,260 @@ bool SCPSection2::Works()
     return false;
 #endif
 }
-#if 0 //use DefaultTable
+/// <summary>
+/// Function to decode encoded data.
+/// </summary>
+/// <param name="buffer">buffer to read in</param>
+/// <param name="offset">position to start reading</param>
+/// <param name="nrbytes">nrbytes of encoded bytes in buffer</param>
+/// <param name="length">length of signal in samples</param>
+/// <param name="difference">difference to use durring decoding</param>
+/// <returns>short array containing decoded data</returns>
+short* SCPSection2::Decode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference)
+{
+    if (Works() || (_NrTables == 0))
+    {
+        if (_NrTables == _DefaultTable)
+        {
+            return InhouseDecode(buffer, bufferLength, offset, nrbytes, length, difference);
+        }
+
+#if 0 //TODO
+        else if (_NrTables == 0)
+        {
+            return NoDecode(buffer, offset, nrbytes, length, difference);
+        }
+        else
+        {
+            return HuffmanTableDecode(buffer, offset, nrbytes, length, difference);
+        }
+
+#endif
+    }
+
+    return null;
+}
+/// <summary>
+/// Function to do huffman decode of encoded data. (using SCP default huffmantable)
+/// </summary>
+/// <param name="buffer">buffer to read in</param>
+/// <param name="offset">position to start reading</param>
+/// <param name="nrbytes">nrbytes of encoded bytes in buffer</param>
+/// <param name="length">length of signal in samples</param>
+/// <param name="difference">difference to use durring decoding</param>
+/// <returns>short array containing decoded data</returns>
+static short* SCPSection2::InhouseDecode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference)
+{
+    // This safes us some calculations.
+    nrbytes += offset;
+
+    // Check if input data makes sense.
+    if ((buffer != null)
+        && (nrbytes <= bufferLength))
+    {
+        // Setting up the variables for decode.
+        short* leadData = new short[length];
+        int currentTime = 0;
+        int currentBit = (offset << 3);
+        int max = 9;
+
+        while (((currentBit >> 3) < nrbytes)
+               && ((currentTime) < length))
+        {
+            int count = currentBit;
+            int cmax = currentBit + max;
+
+            // Read in bits till 0 bit or defined maximum.
+            for (; (currentBit < cmax) && ((currentBit >> 3) < nrbytes) && (((buffer[currentBit >> 3] >> (0x7 - (currentBit & 0x7))) & 0x1) != 0); currentBit++);
+
+            // determine number of bits
+            count = currentBit - count;
+
+            // Increase current bit one more time
+            if (count != max)
+            {
+                currentBit++;
+            }
+
+            // If it doesn't fit stop
+            if ((currentBit >> 3) >= nrbytes)
+            {
+                break;
+            }
+
+            if (count >= max)
+            {
+                // Read in last bit
+                bool tmp = (((buffer[currentBit >> 3] >> (0x7 - (currentBit & 0x7))) & 0x1) == 0);
+                currentBit++;
+                // store starting point of additional bits.
+                int start = currentBit;
+                // If last bit 0 read in 8 additional bits else 16 additional bits.
+                int stop = currentBit + (tmp ? 8 : 16);
+
+                // If it doesn't fit return with error
+                if ((stop >> 3) >= nrbytes)
+                {
+                    break;
+                }
+
+                // Reading in number of extra  bits.
+                for (count = 0; currentBit < stop; currentBit++)
+                {
+                    count <<= 1;
+                    count |= ((buffer[currentBit >> 3] >> (0x7 - (currentBit & 0x7))) & 0x1);
+
+                    if ((start == currentBit)
+                        && (count != 0))
+                    {
+                        count = -1;
+                    }
+                }
+            }
+            else if (count != 0)
+            {
+                // If it doesn't fit stop
+                if ((currentBit >> 3) >= nrbytes)
+                {
+                    break;
+                }
+
+                // if last bit is one value is negative.
+                if (((buffer[currentBit >> 3] >> (0x7 - (currentBit & 0x7))) & 0x1) != 0)
+                {
+                    count = -count;
+                }
+
+                currentBit++;
+            }
+
+            // Decode Differences.
+            switch (difference)
+            {
+                case 0:
+                    leadData[currentTime] = ((short) count);
+                    break;
+
+                case 1:
+                    leadData[currentTime] = ((currentTime == 0) ? (short) count : (short)(count + leadData[currentTime - 1]));
+                    break;
+
+                case 2:
+                    leadData[currentTime] = ((currentTime < 2) ? (short) count : (short)(count + (leadData[currentTime - 1] << 1) - leadData[currentTime - 2]));
+                    break;
+
+                default:
+                    // Undefined difference used exit empty.
+                    return null;
+            }
+
+            // Increment time by one.
+            currentTime++;
+        }
+
+        return leadData;
+    }
+
+    return null;
+}
+#if 0//TODO
+/// <summary>
+/// Function to do huffman decode of encoded data.
+/// </summary>
+/// <param name="buffer">buffer to read in</param>
+/// <param name="offset">position to start reading</param>
+/// <param name="nrbytes">nrbytes of encoded bytes in buffer</param>
+/// <param name="length">length of signal in samples</param>
+/// <param name="difference">difference to use durring decoding</param>
+/// <returns>short array containing decoded data</returns>
+short[] SCPSection2::HuffmanTableDecode(byte[] buffer, int offset, int nrbytes, int length, byte difference)
+{
+    // This safes us some calculations.
+    nrbytes += offset;
+
+    // Check if input data makes sense.
+    if ((buffer != null)
+        && (nrbytes <= buffer.Length))
+    {
+        // Setting up the variables for decode.
+        short[] leadData = new short[length];
+        int currentTime = 0;
+        int currentBit = (offset << 3);
+
+        while (((currentBit >> 3) < nrbytes)
+               && ((currentTime) < length))
+        {
+            // Search for a hit.
+            SCPHuffmanStruct h = InterpettingData(buffer, currentBit);
+
+            // Exit if there was no hit.
+            if (h == null)
+            {
+                return null;
+            }
+
+            // Check if hit fits.
+            if (((currentBit + h.entire) >> 3) >= nrbytes)
+            {
+                break;
+            }
+
+            // If table mode is 0 do switch.
+            if (h.tablemode == 0)
+            {
+                _Selected = h.value - 1;
+                continue;
+            }
+
+            short code = 0;
+
+            // read extra data behind hit if available.
+            for (int count = 0, start = (currentBit + h.prefix); count < (h.entire - h.prefix); count++)
+            {
+                code <<= 1;
+                code += (short)((buffer[(start + count) >> 3] >> (0x7 - ((start + count) & 0x7))) & 0x1);
+
+                if ((count == 0)
+                    && (code != 0))
+                {
+                    code = -1;
+                }
+            }
+
+            // add up a the value of the hit.
+            code += h.value;
+
+            // Decode Differences.
+            switch (difference)
+            {
+                case 0:
+                    leadData[currentTime] = code;
+                    break;
+
+                case 1:
+                    leadData[currentTime] = ((currentTime == 0) ? code : (short)(code + leadData[currentTime - 1]));
+                    break;
+
+                case 2:
+                    leadData[currentTime] = ((currentTime < 2) ? code : (short)(code + (leadData[currentTime - 1] << 1) - leadData[currentTime - 2]));
+                    break;
+
+                default:
+                    // Undefined difference used exit empty.
+                    return null;
+            }
+
+            // Increment current bit
+            currentBit += h.entire;
+            // Increment time by one.
+            currentTime++;
+        }
+
+        return leadData;
+    }
+
+    return null;
+}
 /// <summary>
 /// Find next hit in byte array starting at an offset in bits.
 /// </summary>
@@ -228,6 +571,55 @@ SCPHuffmanStruct SCPSection2::InterpettingData(byte[] buffer, int offset)
 
     return null;
 }
+/// <summary>
+/// Function to do interpetting of unencoded data.
+/// </summary>
+/// <param name="buffer">buffer to read in</param>
+/// <param name="offset">position to start reading</param>
+/// <param name="nrbytes">nrbytes of encoded bytes in buffer</param>
+/// <param name="length">length of signal in samples</param>
+/// <param name="difference">difference to use durring decoding</param>
+/// <returns>short array containing decoded data</returns>
+static short[] SCPSection2::NoDecode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference)
+{
+    // Check if input data makes sense.
+    if ((buffer != null)
+        && ((offset + nrbytes) <= bufferLength)
+        && ((length * sizeof(short)) <= nrbytes))
+    {
+        short[] leadData = new short[length];
+
+        for (int currentTime = 0; currentTime < length; currentTime++)
+        {
+            short code = (short) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(short), true);
+            offset += sizeof(short);
+
+            // Decode Differences.
+            switch (difference)
+            {
+                case 0:
+                    leadData[currentTime] = code;
+                    break;
+
+                case 1:
+                    leadData[currentTime] = ((currentTime == 0) ? code : (short)(code + leadData[currentTime - 1]));
+                    break;
+
+                case 2:
+                    leadData[currentTime] = ((currentTime < 2) ? code : (short)(code + (leadData[currentTime - 1] << 1) - leadData[currentTime - 2]));
+                    break;
+
+                default:
+                    // Undefined difference used exit empty.
+                    return null;
+            }
+        }
+
+        return leadData;
+    }
+
+    return null;
+}
 #endif
 /// <summary>
 /// Function to encode data.
@@ -237,13 +629,13 @@ SCPHuffmanStruct SCPSection2::InterpettingData(byte[] buffer, int offset)
 /// <param name="usedTable">table to use for encoding</param>
 /// <param name="difference">difference to use durring decoding</param>
 /// <returns>byte array containing encoded data</returns>
-uchar* SCPSection2::Encode(short* data, int dataLength, int time, short usedTable, uchar difference, int* encodeLength)
+uchar* SCPSection2::Encode(short* buffer, int dataLength, int time, short usedTable, uchar difference, int* encodeLength)
 {
     if (Works() || _NrTables == 0)
     {
         if (_NrTables == _DefaultTable)
         {
-            return InhouseEncode(data, dataLength, time, difference, encodeLength);
+            return InhouseEncode(buffer, dataLength, time, difference, encodeLength);
         }
 
 #if 0 //use DefaultTable

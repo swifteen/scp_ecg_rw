@@ -156,6 +156,52 @@ SCPSection8::SCPSection8()
     _Statements.clear();
 }
 
+int SCPSection8::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    int startsize = sizeof(_Confirmed) + SCPDate::Size + SCPTime::Size + sizeof(_NrStatements);
+    int end = offset - Size + Length;
+
+    if ((offset + startsize) > end)
+    {
+        return 0x1;
+    }
+
+    _Confirmed = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Confirmed), true);
+    offset += sizeof(_Confirmed);
+    _Date.Read(buffer, bufferLength, offset);
+    offset += SCPDate::Size;
+    _Time.Read(buffer, bufferLength, offset);
+    offset += SCPTime::Size;
+    _NrStatements = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_NrStatements), true);
+    offset += sizeof(_NrStatements);
+
+    if (_NrStatements > 0)
+    {
+        _Statements.resize(_NrStatements);
+        int loper = 0;
+
+        for (; loper < _NrStatements; loper++)
+        {
+            int err = _Statements[loper].Read(buffer, bufferLength, offset);
+
+            if (err != 0)
+            {
+                return 0x2;
+            }
+
+            offset += _Statements[loper].getLength();
+        }
+
+        if (loper != _NrStatements)
+        {
+            _NrStatements = (uchar) loper;
+            return 0x4;
+        }
+    }
+
+    return 0x0;
+}
+
 int SCPSection8::_Write(uchar* buffer, int bufferLength, int offset)
 {
     BytesTool::writeBytes(_Confirmed, buffer, bufferLength, offset, sizeof(_Confirmed), true);
@@ -215,6 +261,52 @@ bool SCPSection8::Works()
     }
 
     return false;
+}
+
+// getting diagnositc information.
+int SCPSection8::getDiagnosticStatements(Statements& stat)
+{
+    if (_NrStatements > 0 && _NrStatements == _Statements.size())
+    {
+        stat.confirmed = (_Confirmed == 1);
+
+        if ((_Date.Year != 0)
+            && (_Date.Month != 0)
+            && (_Date.Day != 0))
+        {
+            stat.time = DateTime(_Date.Year, _Date.Month, _Date.Day, _Time.Hour, _Time.Min, _Time.Sec);
+        }
+        else
+        {
+            stat.time = DateTime(0, 0, 0, 0, 0, 0);
+        }
+
+        stat.statement.resize(_NrStatements);
+
+        for (int loper = 0; loper < _NrStatements; loper++)
+        {
+            if (_Statements[loper].Length > 0)
+            {
+                stat.statement[loper] = BytesTool::readString(_Encoding,
+                                        _Statements[loper].Field,
+                                        _Statements[loper].Length,
+                                        0,
+                                        _Statements[loper].Length);
+            }
+        }
+
+        if ((stat.statement.Length == 1)
+            && ((stat.statement[0] == null)
+                || (stat.statement[0].Length == 0)))
+        {
+            stat = null;
+            return 1;
+        }
+
+        return 0;
+    }
+
+    return 1;
 }
 
 // setting diagnositc information.

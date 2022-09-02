@@ -74,8 +74,10 @@ public:
     /// <param name="maxend">End of all leads in samples</param>
     void setProtected(GlobalMeasurements& global, int medianFreq, int rate, int minbegin, int maxend);
     // Signal Manupalations
+    int getSignals(Signals& signals);
     int setSignals(Signals& signals);
 protected:
+    int _Read(uchar* buffer, int bufferLength, int offset);
     int _Write(uchar* buffer, int bufferLength, int offset);
     void _Empty();
     int _getLength();

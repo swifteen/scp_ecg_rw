@@ -244,6 +244,136 @@ void SCPFormat::Empty()
     EmptyFormat();
 }
 
+// Signal Manupalations
+int SCPFormat::getSignals(Signals& signals)
+{
+    if (signals != null)
+    {
+        SCPSection3* section3 = dynamic_cast<SCPSection3*>(_Default[3]);
+
+        if ((section3 == null) || (section3->getSignals(signals) != 0))
+        {
+            return 2;
+        }
+
+        short* medianData = null;
+        SCPSection4* section4 = dynamic_cast<SCPSection4*>(_Default[4]);
+
+        if ((section4 == null) || (section4->getSignals(signals) == 0))
+        {
+#if 0 //TODO for median data
+            SCPSection5 median = (SCPSection5) _Default[5];
+
+            if (median == null)
+            {
+                return 4;
+            }
+
+            medianData = median.DecodeData((SCPSection2) _Default[2], signals.MedianLength);
+            signals.MedianAVM = median.getAVM();
+            signals.MedianSamplesPerSecond = median.getSamplesPerSecond();
+
+            for (int loper = 0; loper < signals.NrLeads; loper++)
+            {
+                signals[loper].Median = medianData[loper];
+            }
+
+#endif
+        }
+        else
+        {
+            // this will make sure that Decoding of rhythm data will work also for strange files
+            signals.MedianAVM = 0;
+            signals.MedianLength = 0;
+            signals.MedianSamplesPerSecond = 0;
+        }
+
+        SCPSection6* section6 = dynamic_cast<SCPSection6*>(_Default[6]);
+        SCPSection2* section2 = dynamic_cast<SCPSection2*>(_Default[2]);
+        short[][] rhythmData = section6->DecodeData(section2,
+                               section3,
+                               section4,
+                               signals.MedianSamplesPerSecond);
+        signals.RhythmAVM = section6->getAVM();
+
+        if (rhythmData == null)
+        {
+            return 8;
+        }
+
+#if 0 //TODO for median data
+
+        if ((medianData != null)
+            && (((SCPSection3) _Default[3]).isMediansUsed()))
+        {
+            // check this because corpuls ECG are in violation of this rule, but don't use median subtraction
+            if (((signals.MedianSamplesPerSecond % signals.RhythmSamplesPerSecond) != 0)
+                || ((signals.MedianSamplesPerSecond / signals.RhythmSamplesPerSecond) < 1)
+                || ((signals.MedianSamplesPerSecond / signals.RhythmSamplesPerSecond) > 4))
+            {
+                return 16;
+            }
+
+            if (signals.RhythmAVM <= signals.MedianAVM)
+            {
+                ECGTool.ChangeMultiplier(medianData, signals.MedianAVM, signals.RhythmAVM);
+                signals.MedianAVM = signals.RhythmAVM;
+            }
+            else
+            {
+                ECGTool.ChangeMultiplier(rhythmData, signals.RhythmAVM, signals.MedianAVM);
+                signals.RhythmAVM = signals.MedianAVM;
+            }
+
+            signals.RhythmSamplesPerSecond = signals.MedianSamplesPerSecond;
+            ((SCPSection4) _Default[4]).AddMedians((SCPSection3) _Default[3], rhythmData, medianData);
+        }
+        else
+        {
+            signals.RhythmAVM = rhythm.getAVM();
+            signals.RhythmSamplesPerSecond = rhythm.getSamplesPerSecond();
+
+            // Begin: special correction for SCP-ECG by corpuls (part 2)
+            if ((_Default[5] != null)
+                &&  _Default[5].Works())
+            {
+                SCPSection5 medianSpecial = (SCPSection5) _Default[5];
+                signals.MedianLength = 1000;
+                signals.MedianAVM = medianSpecial.getAVM();
+                signals.MedianSamplesPerSecond = medianSpecial.getSamplesPerSecond();
+                medianData = medianSpecial.DecodeData((SCPSection2) _Default[2], signals.MedianLength);
+
+                if (medianData != null)
+                {
+                    for (int loper = 0; loper < signals.NrLeads; loper++)
+                    {
+                        signals[loper].Median = medianData[loper];
+                    }
+                }
+                else
+                {
+                    signals.MedianLength = 0;
+                    signals.MedianAVM = 0;
+                    signals.MedianSamplesPerSecond = 0;
+                }
+            }
+
+            // End: special correction for SCP-ECG by corpuls (part 2)
+        }
+
+#endif
+
+        for (int loper = 0; loper < signals.NrLeads; loper++)
+        {
+            signals[loper].Rhythm = rhythmData[loper];
+        }
+
+        return 0;
+    }
+
+    return 1;
+}
+
 int SCPFormat::setSignals(Signals& signals)
 {
     int NrLeads = signals.getNrLeads();
