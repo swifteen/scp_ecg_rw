@@ -44,11 +44,11 @@ int SCPTime::Read(uchar* buffer, int bufferLength, int offset)
         return 0x1;
     }
 
-    Hour = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Hour), true);
+    Hour = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Hour), true);
     offset += sizeof(Hour);
-    Min = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Min), true);
+    Min = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Min), true);
     offset += sizeof(Min);
-    Sec = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Sec), true);
+    Sec = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Sec), true);
     offset += sizeof(Sec);
     return 0x0;
 }

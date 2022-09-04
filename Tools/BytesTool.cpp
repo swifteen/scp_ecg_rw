@@ -67,7 +67,7 @@ bool BytesTool::writeBytes(long values, uchar* buffer, int bufferLength, int off
 /// <param name="offset">position to start reading</param>
 /// <param name="length">max length of string</param>
 /// <returns>a string</returns>
-static string BytesTool::readString(uchar* buffer, int bufferLength, int offset, int length)
+string BytesTool::readString(uchar* buffer, int bufferLength, int offset, int length)
 {
     return readString("ASCII", buffer, bufferLength, offset, length);
 }
@@ -79,7 +79,7 @@ static string BytesTool::readString(uchar* buffer, int bufferLength, int offset,
 /// <param name="length">max length of string</param>
 /// <param name="value">value to use as terminator of string</param>
 /// <returns>a string</returns>
-static string BytesTool::readString(uchar* buffer, int bufferLength, int offset, int length, uchar terminator)
+string BytesTool::readString(uchar* buffer, int bufferLength, int offset, int length, uchar terminator)
 {
     int strLen = stringLength(buffer, bufferLength, offset, length, terminator);
 
@@ -104,7 +104,7 @@ static string BytesTool::readString(uchar* buffer, int bufferLength, int offset,
 /// <param name="offset">position to start reading</param>
 /// <param name="length">max length of string</param>
 /// <returns>a string</returns>
-static string BytesTool::readString(const std::string& srcEncoding, uchar* buffer, int bufferLength, int offset, int length)
+string BytesTool::readString(const std::string& srcEncoding, uchar* buffer, int bufferLength, int offset, int length)
 {
     string ret = "";
 #if 0
@@ -133,7 +133,7 @@ static string BytesTool::readString(const std::string& srcEncoding, uchar* buffe
 /// <param name="offset">position to start counting from</param>
 /// <param name="length">max length of string</param>
 /// <returns>length of string</returns>
-static int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, int length)
+int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, int length)
 {
     return stringLength("ASCII", buffer, bufferLength, offset, length);
 }
@@ -145,7 +145,7 @@ static int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, 
 /// <param name="length">max length of string</param>
 /// <param name="value">value to use as terminator of string</param>
 /// <returns>length of string</returns>
-static int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, int length, uchar terminator)
+int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, int length, uchar terminator)
 {
     int x = 0;
 
@@ -179,7 +179,7 @@ static int BytesTool::stringLength(uchar* buffer, int bufferLength, int offset, 
 /// <param name="offset">position to start counting from</param>
 /// <param name="length">max length of string</param>
 /// <returns>length of string</returns>
-static int BytesTool::stringLength(const std::string& srcEncoding, uchar* buffer, int bufferLength, int offset, int length)
+int BytesTool::stringLength(const std::string& srcEncoding, uchar* buffer, int bufferLength, int offset, int length)
 {
     int len = 0;
 #if 0 //TODO

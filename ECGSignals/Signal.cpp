@@ -53,8 +53,12 @@ Signal& Signal::operator=(const Signal& rhs)
 
 Signal::~Signal()
 {
-    delete[] Rhythm;
-    delete[] Median;
+    delete[] this->Rhythm;
+    this->Rhythm = null;
+    RhythmLength = 0;
+    delete[] this->Median;
+    this->Median = null;
+    MedianLength = 0;
     //  SCP_PD("Type[%d]\n",(int)Type);
 }
 

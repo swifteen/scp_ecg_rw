@@ -32,7 +32,7 @@ public:
     /// <param name="length">length of signal in samples</param>
     /// <param name="difference">difference to use durring decoding</param>
     /// <returns>short array containing decoded data</returns>
-    short* Decode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference);
+    short* Decode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference, int* decodeLength);
     /// <summary>
     /// Function to do huffman decode of encoded data. (using SCP default huffmantable)
     /// </summary>
@@ -42,7 +42,7 @@ public:
     /// <param name="length">length of signal in samples</param>
     /// <param name="difference">difference to use durring decoding</param>
     /// <returns>short array containing decoded data</returns>
-    static short* InhouseDecode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference);
+    static short* InhouseDecode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference, int* decodeLength);
     /// <summary>
     /// Function to encode data.
     /// </summary>
@@ -88,6 +88,7 @@ public:
     void UseNoHuffman();
 
 protected:
+    int _Read(uchar* buffer, int bufferLength, int offset);
     int _Write(uchar* buffer, int bufferLength, int offset);
     void _Empty();
     int _getLength();

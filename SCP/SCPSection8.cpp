@@ -87,6 +87,37 @@ public:
             }
         }
     }
+    /// <summary>
+    /// Function to read SCP statement.
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if ((offset + sizeof(SequenceNr) + sizeof(Length)) > bufferLength)
+        {
+            return 0x1;
+        }
+
+        SequenceNr = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(SequenceNr), true);
+        offset += sizeof(SequenceNr);
+        Length = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Length), true);
+        offset += sizeof(Length);
+
+        if ((offset + Length) > bufferLength)
+        {
+            return 0x2;
+        }
+
+        if (Length > 0)
+        {
+            Field = new uchar[Length];
+            offset += BytesTool::copy(Field, Length, 0, buffer, bufferLength, offset, Length);
+        }
+
+        return 0x0;
+    }
 
     /// <summary>
     /// Function to write SCP statement.
@@ -274,11 +305,21 @@ int SCPSection8::getDiagnosticStatements(Statements& stat)
             && (_Date.Month != 0)
             && (_Date.Day != 0))
         {
-            stat.time = DateTime(_Date.Year, _Date.Month, _Date.Day, _Time.Hour, _Time.Min, _Time.Sec);
+            stat.time.Year = _Date.Year;
+            stat.time.Month = _Date.Month;
+            stat.time.Day = _Date.Day;
+            stat.time.Hour = _Time.Hour;
+            stat.time.Minute = _Time.Min;
+            stat.time.Second = _Time.Sec;
         }
         else
         {
-            stat.time = DateTime(0, 0, 0, 0, 0, 0);
+            stat.time.Year = 0;
+            stat.time.Month = 0;
+            stat.time.Day = 0;
+            stat.time.Hour = 0;
+            stat.time.Minute = 0;
+            stat.time.Second = 0;
         }
 
         stat.statement.resize(_NrStatements);
@@ -295,11 +336,9 @@ int SCPSection8::getDiagnosticStatements(Statements& stat)
             }
         }
 
-        if ((stat.statement.Length == 1)
-            && ((stat.statement[0] == null)
-                || (stat.statement[0].Length == 0)))
+        if ((stat.statement.size() == 1)
+            || (stat.statement[0].length() == 0))
         {
-            stat = null;
             return 1;
         }
 

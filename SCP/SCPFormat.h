@@ -42,8 +42,11 @@ public:
     SCPFormat();
     ~SCPFormat();
     //region IECGFormat Members
+    int Read(uchar* buffer, int bufferLength, int offset);
     int Write(const string& file);
     int Write(uchar* buffer, int bufferLength, int offset);
+    bool CheckFormat(uchar* buffer, int bufferLength, int offset);
+    void Anonymous(uchar type);
     int getFileSize();
 
     IDemographic* getDemographic();
@@ -58,6 +61,7 @@ public:
     int getSignals(Signals& signals);
     int setSignals(Signals& signals);
 
+    bool CheckSCP(uchar* buffer, int bufferLength, int offset, ushort crc, int length);
     /// <summary>
     /// Function to set pointers.
     /// </summary>
@@ -91,6 +95,7 @@ private:
     ushort _CRC;
     int _Length;
     std::vector<SCPSection*> _Default;
+    std::vector<SCPSection*> _Manufactor;
 };
 }
 }

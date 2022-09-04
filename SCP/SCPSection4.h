@@ -63,7 +63,29 @@ public:
     /// ...</returns>
     int SubtractMedians(SCPSection3 definition, short[][] rhythm, short[][] median);
 #endif
-
+    /// <summary>
+    /// Function to get nr of protected zones.
+    /// </summary>
+    /// <returns>nr of protected zones</returns>
+    int getNrProtectedZones();
+    /// <summary>
+    /// Function to get start of protected zone.
+    /// </summary>
+    /// <param name="nr">nr of protected zone</param>
+    /// <returns>start sample nr of protected zone</returns>
+    int getProtectedStart(int nr);
+    /// <summary>
+    /// Function to get end of protected zone.
+    /// </summary>
+    /// <param name="nr">nr of protected zone</param>
+    /// <returns>end sample nr of protected zone</returns>
+    int getProtectedEnd(int nr);
+    /// <summary>
+    /// Function to get length of protected zone.
+    /// </summary>
+    /// <param name="nr">nr of protected zone</param>
+    /// <returns>length of protected zone in samples</returns>
+    int getProtectedLength(int nr);
     /// <summary>
     /// Function to set protected zones using global measurements.
     /// </summary>

@@ -26,7 +26,16 @@ public:
     /// </summary>
     /// <param name="nrleads">nr of leads in section</param>
     void setNrLeads(ushort nrleads);
-
+    /// <summary>
+    /// Function to decode data in this section.
+    /// </summary>
+    /// <param name="tables">Huffman table to use during deconding</param>
+    /// <param name="leadDefinition"></param>
+    /// <returns>decoded leads</returns>
+    short** DecodeData(SCPSection2* tables,
+                       SCPSection3* leadDefinition,
+                       SCPSection4* qrsLocations,
+                       int medianFreq);
     /// <summary>
     /// Function to encode data in this section.
     /// </summary>
@@ -79,6 +88,7 @@ public:
     /// <param name="bimodal">true if bimodal used</param>
     void setBimodal(bool bimodal);
 protected:
+    int _Read(uchar* buffer, int bufferLength, int offset);
     int _Write(uchar* buffer, int bufferLength, int offset);
     void _Empty();
     int _getLength();
@@ -95,7 +105,6 @@ private:
     uchar _Bimodal;
     std::vector<ushort> _DataLength;
     std::vector<uchar*> _Data;
-    std::vector<ushort> _DataRealLength;
 };
 }
 }

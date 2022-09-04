@@ -49,9 +49,9 @@ int SCPDate::Read(uchar* buffer, int bufferLength, int offset)
 
     Year = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Year), true);
     offset += sizeof(Year);
-    Month = (byte) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Month), true);
+    Month = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Month), true);
     offset += sizeof(Month);
-    Day = (byte) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Day), true);
+    Day = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Day), true);
     offset += sizeof(Day);
     return 0x0;
 }

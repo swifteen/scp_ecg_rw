@@ -11,6 +11,7 @@ namespace ECGLeadMeasurements
 /// </summary>
 class ILeadMeasurement
 {
+public:
     /// <summary>
     /// Function to get the lead measurements of ECG.
     /// </summary>

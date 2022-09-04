@@ -1,4 +1,5 @@
 #include "SCPFormat.h"
+#include <typeinfo>
 #include "SCPSection0.h"
 #include "SCPSection1.h"
 #include "SCPSection2.h"
@@ -59,6 +60,7 @@ SCPFormat::SCPFormat()
                  new SCPSection10(),
                  new SCPSection11()
     };
+    _Manufactor.clear();
 }
 SCPFormat::~SCPFormat()
 {
@@ -68,6 +70,107 @@ SCPFormat::~SCPFormat()
     {
         delete _Default[i];
     }
+
+    size = _Manufactor.size();
+
+    for (int i = 0; i < size; i++)
+    {
+        delete _Manufactor[i];
+    }
+}
+
+int SCPFormat::Read(uchar* buffer, int bufferLength, int offset)
+{
+    // Read in pointers (section0)
+    SCPSection0* pointers = dynamic_cast<SCPSection0*>(_Default[0]);
+    int err = _Default[0]->Read(buffer, bufferLength, offset + sizeof(_CRC) + sizeof(_Length), 0);
+
+    if ((err != 0)
+        || (pointers == null))
+    {
+        return 0x1;
+    }
+
+    ushort nrleads = 0;
+
+    // set extra space for extra sections.
+    if (pointers->getNrPointers() > _MinNrSections)
+    {
+        int size = pointers->getNrPointers() - _MinNrSections;
+        _Manufactor.resize(size);
+
+        for (int i = 0; i < size; i++)
+        {
+            _Manufactor[i] = null;
+        }
+    }
+
+    string usedEncoding = "";
+
+    // read in all section but pointers (section0).
+    for (int loper = 1; loper < pointers->getNrPointers(); loper++)
+    {
+        // Special case for SCP Section 5 and 6 (they need to know the nr of leads used).
+        if ((loper < _MinNrSections)
+            && (typeid(_Default[loper]) == typeid(SCPSection5*)))
+        {
+            ((SCPSection5*)_Default[loper])->setNrLeads(nrleads);
+        }
+        else if ((loper < _MinNrSections)
+                 && (typeid(_Default[loper]) == typeid(SCPSection6*)))
+        {
+            ((SCPSection6*)_Default[loper])->setNrLeads(nrleads);
+        }
+
+        // Section works if length if greater then size of section header.
+        if (pointers->getLength(loper) > 16)
+        {
+            if (loper < _MinNrSections)
+            {
+                int ret = _Default[loper]->Read(buffer, bufferLength, offset + pointers->getIndex(loper) - 1, pointers->getLength(loper));
+
+                if (ret != 0)
+                {
+                    err |= (0x2 << loper);
+                }
+
+                if (usedEncoding.length() > 0)
+                {
+                    _Default[loper]->SetEncoding(usedEncoding);
+                }
+            }
+            else
+            {
+                _Manufactor[loper - _MinNrSections] = new SCPSectionUnknown();
+                int ret = _Manufactor[loper - _MinNrSections]->Read(buffer, bufferLength, offset + pointers->getIndex(loper) - 1, pointers->getLength(loper));
+
+                if (ret != 0)
+                {
+                    err |= (0x2 << loper);
+                }
+
+                if (usedEncoding.length() > 0)
+                {
+                    _Manufactor[loper - _MinNrSections]->SetEncoding(usedEncoding);
+                }
+            }
+        }
+
+        if ((loper < _MinNrSections)
+            && (typeid(_Default[loper]) == typeid(SCPSection1*)))
+        {
+            usedEncoding = ((SCPSection1*)_Default[loper])->getLanguageSupportCode();
+            _Default[0]->SetEncoding(usedEncoding);
+            _Default[1]->SetEncoding(usedEncoding);
+        }
+        else if ((loper < _MinNrSections)
+                 && (typeid(_Default[loper]) == typeid(SCPSection3*)))
+        {
+            nrleads = ((SCPSection3*)_Default[loper])->getNrLeads();
+        }
+    }
+
+    return err;
 }
 
 int SCPFormat::Write(const string& file)
@@ -123,15 +226,11 @@ int SCPFormat::Write(uchar* buffer, int bufferLength, int offset)
                 {
                     _Default[loper]->Write(buffer, bufferLength, offset + pointers->getIndex(loper) - 1);
                 }
-
-#if 0 //current not support _Manufactor
-                else if ((pointers.getLength(loper) > SCPSection.Size)
+                else if ((pointers->getLength(loper) > SCPSection::Size)
                          && (_Manufactor[loper - _MinNrSections] != null))
                 {
-                    _Manufactor[loper - _MinNrSections].Write(buffer, offset + pointers.getIndex(loper) - 1);
+                    _Manufactor[loper - _MinNrSections]->Write(buffer, bufferLength, offset + pointers->getIndex(loper) - 1);
                 }
-
-#endif
             }
 
             // Calculate CRC of byte array.
@@ -146,6 +245,44 @@ int SCPFormat::Write(uchar* buffer, int bufferLength, int offset)
     }
 
     return 0x1;
+}
+
+#if 0
+bool SCPFormat::CheckFormat(string file, int offset)
+{
+    if (file != null)
+    {
+        Stream read = new FileStream(file, FileMode.Open);
+        bool ret = CheckFormat(read, offset);
+        read.Close();
+        return ret;
+    }
+
+    return false;
+}
+#endif
+
+bool SCPFormat::CheckFormat(uchar* buffer, int bufferLength, int offset)
+{
+    ushort crc = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_CRC), true);
+    int length = (int) BytesTool::readBytes(buffer, bufferLength, offset + sizeof(_CRC), sizeof(_Length), true);
+
+    if (((offset + length) < bufferLength)
+        && (length < _MinFileLength))
+    {
+        return false;
+    }
+
+    return CheckSCP(buffer, bufferLength, offset, crc, length);
+}
+void SCPFormat::Anonymous(uchar type)
+{
+    if ((_Default[1] != null)
+        && (_Default[1]->Works())
+        && (typeid(_Default[1]) == typeid(SCPSection1*)))
+    {
+        ((SCPSection1*)_Default[1])->Anonymous(type);
+    }
 }
 
 int SCPFormat::getFileSize()
@@ -247,131 +384,128 @@ void SCPFormat::Empty()
 // Signal Manupalations
 int SCPFormat::getSignals(Signals& signals)
 {
-    if (signals != null)
+    SCPSection3* section3 = dynamic_cast<SCPSection3*>(_Default[3]);
+
+    if ((section3 == null) || (section3->getSignals(signals) != 0))
     {
-        SCPSection3* section3 = dynamic_cast<SCPSection3*>(_Default[3]);
+        return 2;
+    }
 
-        if ((section3 == null) || (section3->getSignals(signals) != 0))
-        {
-            return 2;
-        }
+    short* medianData = null;
+    SCPSection4* section4 = dynamic_cast<SCPSection4*>(_Default[4]);
 
-        short* medianData = null;
-        SCPSection4* section4 = dynamic_cast<SCPSection4*>(_Default[4]);
-
-        if ((section4 == null) || (section4->getSignals(signals) == 0))
-        {
+    if ((section4 == null) || (section4->getSignals(signals) == 0))
+    {
 #if 0 //TODO for median data
-            SCPSection5 median = (SCPSection5) _Default[5];
+        SCPSection5 median = (SCPSection5) _Default[5];
 
-            if (median == null)
-            {
-                return 4;
-            }
-
-            medianData = median.DecodeData((SCPSection2) _Default[2], signals.MedianLength);
-            signals.MedianAVM = median.getAVM();
-            signals.MedianSamplesPerSecond = median.getSamplesPerSecond();
-
-            for (int loper = 0; loper < signals.NrLeads; loper++)
-            {
-                signals[loper].Median = medianData[loper];
-            }
-
-#endif
-        }
-        else
+        if (median == null)
         {
-            // this will make sure that Decoding of rhythm data will work also for strange files
-            signals.MedianAVM = 0;
-            signals.MedianLength = 0;
-            signals.MedianSamplesPerSecond = 0;
+            return 4;
         }
 
-        SCPSection6* section6 = dynamic_cast<SCPSection6*>(_Default[6]);
-        SCPSection2* section2 = dynamic_cast<SCPSection2*>(_Default[2]);
-        short[][] rhythmData = section6->DecodeData(section2,
-                               section3,
-                               section4,
-                               signals.MedianSamplesPerSecond);
-        signals.RhythmAVM = section6->getAVM();
-
-        if (rhythmData == null)
-        {
-            return 8;
-        }
-
-#if 0 //TODO for median data
-
-        if ((medianData != null)
-            && (((SCPSection3) _Default[3]).isMediansUsed()))
-        {
-            // check this because corpuls ECG are in violation of this rule, but don't use median subtraction
-            if (((signals.MedianSamplesPerSecond % signals.RhythmSamplesPerSecond) != 0)
-                || ((signals.MedianSamplesPerSecond / signals.RhythmSamplesPerSecond) < 1)
-                || ((signals.MedianSamplesPerSecond / signals.RhythmSamplesPerSecond) > 4))
-            {
-                return 16;
-            }
-
-            if (signals.RhythmAVM <= signals.MedianAVM)
-            {
-                ECGTool.ChangeMultiplier(medianData, signals.MedianAVM, signals.RhythmAVM);
-                signals.MedianAVM = signals.RhythmAVM;
-            }
-            else
-            {
-                ECGTool.ChangeMultiplier(rhythmData, signals.RhythmAVM, signals.MedianAVM);
-                signals.RhythmAVM = signals.MedianAVM;
-            }
-
-            signals.RhythmSamplesPerSecond = signals.MedianSamplesPerSecond;
-            ((SCPSection4) _Default[4]).AddMedians((SCPSection3) _Default[3], rhythmData, medianData);
-        }
-        else
-        {
-            signals.RhythmAVM = rhythm.getAVM();
-            signals.RhythmSamplesPerSecond = rhythm.getSamplesPerSecond();
-
-            // Begin: special correction for SCP-ECG by corpuls (part 2)
-            if ((_Default[5] != null)
-                &&  _Default[5].Works())
-            {
-                SCPSection5 medianSpecial = (SCPSection5) _Default[5];
-                signals.MedianLength = 1000;
-                signals.MedianAVM = medianSpecial.getAVM();
-                signals.MedianSamplesPerSecond = medianSpecial.getSamplesPerSecond();
-                medianData = medianSpecial.DecodeData((SCPSection2) _Default[2], signals.MedianLength);
-
-                if (medianData != null)
-                {
-                    for (int loper = 0; loper < signals.NrLeads; loper++)
-                    {
-                        signals[loper].Median = medianData[loper];
-                    }
-                }
-                else
-                {
-                    signals.MedianLength = 0;
-                    signals.MedianAVM = 0;
-                    signals.MedianSamplesPerSecond = 0;
-                }
-            }
-
-            // End: special correction for SCP-ECG by corpuls (part 2)
-        }
-
-#endif
+        medianData = median.DecodeData((SCPSection2) _Default[2], signals.MedianLength);
+        signals.MedianAVM = median.getAVM();
+        signals.MedianSamplesPerSecond = median.getSamplesPerSecond();
 
         for (int loper = 0; loper < signals.NrLeads; loper++)
         {
-            signals[loper].Rhythm = rhythmData[loper];
+            signals[loper].Median = medianData[loper];
         }
 
-        return 0;
+#endif
+    }
+    else
+    {
+        // this will make sure that Decoding of rhythm data will work also for strange files
+        signals.MedianAVM = 0;
+        signals.MedianLength = 0;
+        signals.MedianSamplesPerSecond = 0;
     }
 
-    return 1;
+    SCPSection6* rhythm = dynamic_cast<SCPSection6*>(_Default[6]);//rhythm
+    SCPSection2* section2 = dynamic_cast<SCPSection2*>(_Default[2]);
+    short** rhythmData = rhythm->DecodeData(section2,
+                                            section3,
+                                            section4,
+                                            signals.MedianSamplesPerSecond);
+    signals.RhythmAVM = rhythm->getAVM();
+
+    if (rhythmData == null)
+    {
+        return 8;
+    }
+
+#if 0 //TODO for median data
+
+    if ((medianData != null)
+        && (((SCPSection3) _Default[3]).isMediansUsed()))
+    {
+        // check this because corpuls ECG are in violation of this rule, but don't use median subtraction
+        if (((signals.MedianSamplesPerSecond % signals.RhythmSamplesPerSecond) != 0)
+            || ((signals.MedianSamplesPerSecond / signals.RhythmSamplesPerSecond) < 1)
+            || ((signals.MedianSamplesPerSecond / signals.RhythmSamplesPerSecond) > 4))
+        {
+            return 16;
+        }
+
+        if (signals.RhythmAVM <= signals.MedianAVM)
+        {
+            ECGTool.ChangeMultiplier(medianData, signals.MedianAVM, signals.RhythmAVM);
+            signals.MedianAVM = signals.RhythmAVM;
+        }
+        else
+        {
+            ECGTool.ChangeMultiplier(rhythmData, signals.RhythmAVM, signals.MedianAVM);
+            signals.RhythmAVM = signals.MedianAVM;
+        }
+
+        signals.RhythmSamplesPerSecond = signals.MedianSamplesPerSecond;
+        ((SCPSection4) _Default[4]).AddMedians((SCPSection3) _Default[3], rhythmData, medianData);
+    }
+    else
+    {
+        signals.RhythmAVM = rhythm.getAVM();
+        signals.RhythmSamplesPerSecond = rhythm.getSamplesPerSecond();
+
+        // Begin: special correction for SCP-ECG by corpuls (part 2)
+        if ((_Default[5] != null)
+            &&  _Default[5].Works())
+        {
+            SCPSection5 medianSpecial = (SCPSection5) _Default[5];
+            signals.MedianLength = 1000;
+            signals.MedianAVM = medianSpecial.getAVM();
+            signals.MedianSamplesPerSecond = medianSpecial.getSamplesPerSecond();
+            medianData = medianSpecial.DecodeData((SCPSection2) _Default[2], signals.MedianLength);
+
+            if (medianData != null)
+            {
+                for (int loper = 0; loper < signals.NrLeads; loper++)
+                {
+                    signals[loper].Median = medianData[loper];
+                }
+            }
+            else
+            {
+                signals.MedianLength = 0;
+                signals.MedianAVM = 0;
+                signals.MedianSamplesPerSecond = 0;
+            }
+        }
+
+        // End: special correction for SCP-ECG by corpuls (part 2)
+    }
+
+#endif
+
+    for (int loper = 0; loper < signals.getNrLeads(); loper++)
+    {
+        signals[loper].Rhythm = rhythmData[loper];
+    }
+
+    //free the memory of the pointers to the rows
+    free(rhythmData);
+    return 0;
 }
 
 int SCPFormat::setSignals(Signals& signals)
@@ -534,7 +668,26 @@ int SCPFormat::setSignals(Signals& signals)
 
     return 1;
 }
+/// <summary>
+/// Function to check SCP.
+/// </summary>
+/// <param name="buffer">byte array to do check in</param>
+/// <param name="offset">position to start checking</param>
+/// <param name="crc">value crc should be</param>
+/// <param name="length">length of section</param>
+/// <returns>0 on success</returns>
+bool SCPFormat::CheckSCP(uchar* buffer, int bufferLength, int offset, ushort crc, int length)
+{
+    CRCTool crctool;
+    crctool.Init(CRCTool::CRCCode::CRC_CCITT);
 
+    if (crctool.CalcCRCITT(buffer, bufferLength, offset + sizeof(_CRC), length - sizeof(_CRC)) == crc)
+    {
+        return true;
+    }
+
+    return false;
+}
 /// <summary>
 /// Function to set pointers.
 /// </summary>

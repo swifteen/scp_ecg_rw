@@ -24,6 +24,7 @@ public:
     int getLeadMeasurements(LeadMeasurements& mes);
     int setLeadMeasurements(LeadMeasurements& mes);
 protected:
+    int _Read(uchar* buffer, int bufferLength, int offset);
     int _Write(uchar* buffer, int bufferLength, int offset);
     void _Empty();
     int _getLength();

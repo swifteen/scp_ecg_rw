@@ -50,11 +50,11 @@ public:
             return 0x1;
         }
 
-        Start = (int) BytesTool.readBytes(buffer, offset, sizeof(Start), true);
+        Start = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Start), true);
         offset += sizeof(Start);
-        End = (int) BytesTool.readBytes(buffer, offset, sizeof(End), true);
+        End = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(End), true);
         offset += sizeof(End);
-        ID = (uchar) BytesTool.readBytes(buffer, offset, sizeof(ID), true);
+        ID = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(ID), true);
         offset += sizeof(ID);
         return 0x0;
     }
@@ -115,7 +115,7 @@ int SCPSection3::_Read(uchar* buffer, int bufferLength, int offset)
     _Flags = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Flags), true);
     offset += sizeof(_Flags);
 
-    if (offset + (_NrLeads * SCPLead.Size) > end)
+    if (offset + (_NrLeads * SCPLead::Size) > end)
     {
         _Empty();
         return 0x2;
@@ -123,9 +123,9 @@ int SCPSection3::_Read(uchar* buffer, int bufferLength, int offset)
 
     // BEGIN DIRTY SOLUTION!!!
     // this solution is for a bug in some CCW files.
-    if (((end - offset) / SCPLead.Size) > _NrLeads)
+    if (((end - offset) / SCPLead::Size) > _NrLeads)
     {
-        _NrLeads = (uchar)((end - offset) / SCPLead.Size);
+        _NrLeads = (uchar)((end - offset) / SCPLead::Size);
     }
 
     // END DIRTY SOLUTION!!!
@@ -140,7 +140,7 @@ int SCPSection3::_Read(uchar* buffer, int bufferLength, int offset)
             return err << 2 + loper;
         }
 
-        offset += SCPLead.Size;
+        offset += SCPLead::Size;
     }
 
     return 0x0;

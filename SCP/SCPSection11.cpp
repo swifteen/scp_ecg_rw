@@ -86,6 +86,43 @@ public:
             }
         }
     }
+    /// <summary>
+    /// Function to read SCP statement from SCP statement.
+    /// </summary>
+    /// <param name="buffer">byte array</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if ((offset + sizeof(SequenceNr) + sizeof(Length)) > bufferLength)
+        {
+            return 0x1;
+        }
+
+        SequenceNr = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(SequenceNr), true);
+        offset += sizeof(SequenceNr);
+        Length = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Length), true);
+        offset += sizeof(Length);
+
+        if (Length >= sizeof(TypeID))
+        {
+            if ((offset + Length) > bufferLength)
+            {
+                return 0x2;
+            }
+
+            TypeID = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(TypeID), true);
+            offset += sizeof(TypeID);
+
+            if (Length > sizeof(TypeID))
+            {
+                Field = new uchar[Length - sizeof(TypeID)];
+                offset += BytesTool::copy(Field, Length - sizeof(TypeID), 0, buffer, bufferLength, offset, Length - sizeof(TypeID));
+            }
+        }
+
+        return 0x0;
+    }
 
     /// <summary>
     /// Function to write SCP statement.
@@ -170,7 +207,51 @@ SCPSection11::SCPSection11()
     _NrStatements = 0;
     _Statements.clear();
 }
+int SCPSection11::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    int startsize = sizeof(_Confirmed) + SCPDate::Size + SCPTime::Size + sizeof(_NrStatements);
+    int end = offset - Size + Length;
 
+    if ((offset + startsize) > end)
+    {
+        return 0x1;
+    }
+
+    _Confirmed = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Confirmed), true);
+    offset += sizeof(_Confirmed);
+    _Date.Read(buffer, bufferLength, offset);
+    offset += SCPDate::Size;
+    _Time.Read(buffer, bufferLength, offset);
+    offset += SCPTime::Size;
+    _NrStatements = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_NrStatements), true);
+    offset += sizeof(_NrStatements);
+
+    if (_NrStatements > 0)
+    {
+        _Statements.resize(_NrStatements);
+        int loper = 0;
+
+        for (; loper < _NrStatements; loper++)
+        {
+            int err = _Statements[loper].Read(buffer, bufferLength, offset);
+
+            if (err != 0)
+            {
+                return 0x2;
+            }
+
+            offset += _Statements[loper].getLength();
+        }
+
+        if (loper != _NrStatements)
+        {
+            _NrStatements = (uchar) loper;
+            return 0x4;
+        }
+    }
+
+    return 0x0;
+}
 int SCPSection11::_Write(uchar* buffer, int bufferLength, int offset)
 {
     BytesTool::writeBytes(_Confirmed, buffer, bufferLength, offset, sizeof(_Confirmed), true);

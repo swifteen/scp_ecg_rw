@@ -33,20 +33,20 @@ public:
     /// <returns>0 on success</returns>
     int Read(uchar* buffer, int bufferLength, int offset)
     {
-        if ((offset + Size) > buffer.Length)
+        if ((offset + Size) > bufferLength)
         {
             return 0x1;
         }
 
-        prefix = (uchar) BytesTool.readBytes(buffer, offset, sizeof(prefix), true);
+        prefix = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(prefix), true);
         offset += sizeof(prefix);
-        entire = (uchar) BytesTool.readBytes(buffer, offset, sizeof(entire), true);
+        entire = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(entire), true);
         offset += sizeof(entire);
-        tablemode = (uchar) BytesTool.readBytes(buffer, offset, sizeof(tablemode), true);
+        tablemode = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(tablemode), true);
         offset += sizeof(tablemode);
-        value = (short) BytesTool.readBytes(buffer, offset, sizeof(value), true);
+        value = (short) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(value), true);
         offset += sizeof(value);
-        uint tempCode = (uchar) BytesTool.readBytes(buffer, offset, sizeof(code), true);
+        uint tempCode = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(code), true);
         offset += sizeof(code);
         // Have to reverse the code, because SCP stores it that way.
         code = 0;
@@ -142,7 +142,7 @@ int SCPSection2::_Read(uchar* buffer, int bufferLength, int offset)
         return 0x1;
     }
 
-    _NrTables = (ushort) BytesTool.readBytes(buffer, offset, sizeof(_NrTables), true);
+    _NrTables = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_NrTables), true);
     offset += sizeof(_NrTables);
 
     if (_NrTables < _DefaultTable)
@@ -158,7 +158,7 @@ int SCPSection2::_Read(uchar* buffer, int bufferLength, int offset)
                 return 0x2;
             }
 
-            _Tables[table] = new SCPHuffmanStruct[BytesTool.readBytes(buffer, offset, sizeof(_NrTables), true)];
+            _Tables[table] = new SCPHuffmanStruct[BytesTool::readBytes(buffer, offset, sizeof(_NrTables), true)];
             offset += sizeof(_NrTables);
 
             if ((offset + (_Tables[table].Length * SCPHuffmanStruct.Size)) > end)
@@ -294,13 +294,13 @@ bool SCPSection2::Works()
 /// <param name="length">length of signal in samples</param>
 /// <param name="difference">difference to use durring decoding</param>
 /// <returns>short array containing decoded data</returns>
-short* SCPSection2::Decode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference)
+short* SCPSection2::Decode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference, int* decodeLength)
 {
     if (Works() || (_NrTables == 0))
     {
         if (_NrTables == _DefaultTable)
         {
-            return InhouseDecode(buffer, bufferLength, offset, nrbytes, length, difference);
+            return InhouseDecode(buffer, bufferLength, offset, nrbytes, length, difference, decodeLength);
         }
 
 #if 0 //TODO
@@ -327,7 +327,7 @@ short* SCPSection2::Decode(uchar* buffer, int bufferLength, int offset, int nrby
 /// <param name="length">length of signal in samples</param>
 /// <param name="difference">difference to use durring decoding</param>
 /// <returns>short array containing decoded data</returns>
-static short* SCPSection2::InhouseDecode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference)
+short* SCPSection2::InhouseDecode(uchar* buffer, int bufferLength, int offset, int nrbytes, int length, uchar difference, int* decodeLength)
 {
     // This safes us some calculations.
     nrbytes += offset;
@@ -436,6 +436,7 @@ static short* SCPSection2::InhouseDecode(uchar* buffer, int bufferLength, int of
             currentTime++;
         }
 
+        *decodeLength = length;
         return leadData;
     }
 

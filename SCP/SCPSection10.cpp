@@ -396,12 +396,14 @@ int SCPSection10::getLeadMeasurements(LeadMeasurements& mes)
 
         for (int i = 0; i < nrLeads; i++)
         {
-            mes.Measurements[i].LeadType = _LeadMeasurements[i].LeadId;
-            int len = _LeadMeasurements[i].Count;
+            mes.Measurements[i].leadType = _LeadMeasurements[i].getLeadType();
+            int len = _LeadMeasurements[i].getCount();
 
             for (int j = 0; j < len; j++)
             {
-                mes.Measurements[i][(MeasurementType) j] = _LeadMeasurements[i][j];
+                mes.Measurements[i].setMeasurement((MeasurementType) j,
+                                                   _LeadMeasurements[i].getMeasurement((MeasurementType) j));
+                //mes.Measurements[i][(MeasurementType) j] = _LeadMeasurements[i][j];
             }
         }
 

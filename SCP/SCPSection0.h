@@ -37,6 +37,12 @@ public:
     /// <returns>id of section</returns>
     ushort getSectionID(int nr);
     /// <summary>
+    /// Function to set section id of a pointer.
+    /// </summary>
+    /// <param name="nr">number of pointer to set</param>
+    /// <param name="ID">id of section</param>
+    void setSectionID(int nr, ushort ID);
+    /// <summary>
     /// Function to get index of a pointer.
     /// </summary>
     /// <param name="nr">number of pointer to get from</param>
@@ -77,6 +83,7 @@ public:
     /// <param name="index">index of section</param>
     void setPointer(int nr, ushort id, int length, int index);
 protected:
+    int _Read(uchar* buffer, int bufferLength, int offset);
     int _Write(uchar* buffer, int bufferLength, int offset);
     void _Empty();
     int _getLength();
@@ -89,6 +96,7 @@ private:
     class SCPPointer;
     // Part of the stored Data Structure.
     std::vector<SCPPointer> _MandatoryPointers;
+    std::vector<SCPPointer> _OptionalPointers;
 };
 }
 }

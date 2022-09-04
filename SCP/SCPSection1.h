@@ -62,6 +62,22 @@ public:
     SCPHeaderField GetField(uchar tag);
 #endif
     /// <summary>
+    /// Function to anonymous this section.
+    /// </summary>
+    /// <param name="type">value to empty with</param>
+    void Anonymous(uchar type);
+    /// <summary>
+    /// Get encoding for text from language support code.
+    /// </summary>
+    /// <returns>used encoding</returns>
+    std::string getLanguageSupportCode();
+    /// <summary>
+    /// Get encoding for text from language support code.
+    /// </summary>
+    /// <param name="enc">used encoding</param>
+    /// <returns>0 if successfull</returns>
+    int getLanguageSupportCode(std::string& enc);
+    /// <summary>
     /// Set language support code based on encoding.
     /// </summary>
     /// <param name="enc">encoding to set lsc with.</param>
@@ -194,6 +210,7 @@ public:
     uchar getStatCode();
     void setStatCode(uchar StatCode);
 protected:
+    int _Read(uchar* buffer, int bufferLength, int offset);
     int _Write(uchar* buffer, int bufferLength, int offset);
     void _Empty();
     int _getLength();
@@ -222,6 +239,8 @@ private:
     /// <returns>is exception then true</returns>
     static bool isException(uchar* condition, int conditionLength, uchar tag);
 private:
+    // Fields that must be made empty for anonymous. (must be sorted from low to high)
+    static uchar _AnonymousFields[7];
     // Defined in SCP.
     static uchar _MustBePresent[4]; // defined in paragraph 5.4.3.1 of SCP
     static uchar _MultipleInstanceFields[5]; // Must be sorted

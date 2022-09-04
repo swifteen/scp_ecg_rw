@@ -33,6 +33,21 @@ SCPSectionUnknown::~SCPSectionUnknown()
     }
 }
 
+int SCPSectionUnknown::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    int length = Length - Size;
+
+    if (length <= 0)
+    {
+        return 0x1;
+    }
+
+    _Data = new uchar[length];
+    _DataLength = length;
+    offset += BytesTool::copy(_Data, length, 0, buffer, bufferLength, offset, length);
+    return 0x00;
+}
+
 int SCPSectionUnknown::_Write(uchar* buffer, int bufferLength, int offset)
 {
     offset += BytesTool::copy(buffer, bufferLength, offset, _Data, _DataLength, 0, _DataLength);

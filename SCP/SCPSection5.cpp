@@ -49,7 +49,85 @@ SCPSection5::~SCPSection5()
         }
     }
 }
+int SCPSection5::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    if (_NrLeads == 0)
+    {
+        return 0x1;
+    }
 
+    _DataLength.resize(_NrLeads);
+    _Data.resize(_NrLeads);
+    int end = offset - Size + Length;
+    int startlen = (sizeof(_AVM) + sizeof(_TimeInterval) + sizeof(_Difference) + sizeof(_Reserved));
+    startlen += _DataLength.size() * sizeof(_DataLength[0]);
+
+    if ((offset + startlen) > end)
+    {
+        return 0x2;
+    }
+
+    _AVM = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_AVM), true);
+    offset += sizeof(_AVM);
+    _TimeInterval = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_TimeInterval), true);
+    offset += sizeof(_TimeInterval);
+    _Difference = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Difference), true);
+    offset += sizeof(_Difference);
+    _Reserved = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Reserved), true);
+    offset += sizeof(_Reserved);
+    int sum = 0;
+
+    for (int loper = 0; loper < _Data.size(); loper++)
+    {
+        sum += (_DataLength[loper] = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_DataLength[loper]), true));
+        offset += sizeof(_DataLength[loper]);
+    }
+
+    if ((offset + sum) > end)
+    {
+        if (_Difference == 0)
+        {
+            // Begin: special correction for SCP-ECG by corpuls
+            int nrBytes = (end - offset);
+            int bytesPerLead = nrBytes / _NrLeads;
+
+            if ((bytesPerLead < ushort_MaxValue)
+                && (((bytesPerLead * 1000) / this->getSamplesPerSecond()) >= 1000))
+            {
+                for (int i = 0; i < _NrLeads; i++)
+                {
+                    _DataLength[i] = (ushort) bytesPerLead;
+                }
+
+                // Here is the trick the data length is missing
+                offset -= (_NrLeads << 1);
+            }
+            else
+            {
+                return 0x4;
+            }
+
+            // End: special correction for SCP-ECG by corpuls
+        }
+        else
+        {
+            return 0x4;
+        }
+    }
+
+    for (int loper = 0; loper < _Data.size(); loper++)
+    {
+        _Data[loper] = new uchar[_DataLength[loper]];
+        offset += BytesTool::copy(_Data[loper], _DataLength[loper], 0, buffer, bufferLength, offset, _DataLength[loper]);
+
+        if ((_DataLength[loper] & 0x1) == 0x1)
+        {
+            _DataLength[loper]++;
+        }
+    }
+
+    return 0x00;
+}
 int SCPSection5::_Write(uchar* buffer, int bufferLength, int offset)
 {
     BytesTool::writeBytes(_AVM, buffer, bufferLength, offset, sizeof(_AVM), true);

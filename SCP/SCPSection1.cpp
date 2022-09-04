@@ -101,6 +101,8 @@ public:
     uchar* Value;
 };
 
+// Fields that must be made empty for anonymous. (must be sorted from low to high)
+uchar SCPSection1::_AnonymousFields[7] = {0, 1, 2, 3, 5, 30, 31};
 // Defined in SCP.
 uchar SCPSection1::_MustBePresent[4] = {2, 14, 25, 26}; // defined in paragraph 5.4.3.1 of SCP
 uchar SCPSection1::_MultipleInstanceFields[5] = {10, 13, 30, 32, 35}; // Must be sorted
@@ -124,7 +126,43 @@ SCPSection1::SCPSection1():
     // Part of the stored Data Structure.
     _Fields.clear();
 }
+int SCPSection1::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    Init();
+    int end = offset - Size + Length;
 
+    while (offset < end)
+    {
+        SCPHeaderField field;
+        field.Tag = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(field.Tag), true);
+        offset += sizeof(field.Tag);
+
+        if (field.Tag == _DemographicTerminator)
+        {
+            break;
+        }
+        else if ((offset + 2) > end)
+        {
+            _Empty();
+            return 0x1;
+        }
+
+        field.Length = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(field.Length), true);
+        offset += sizeof(field.Length);
+
+        if ((offset + field.Length) > end)
+        {
+            _Empty();
+            return 0x2;
+        }
+
+        field.Value = new uchar[field.Length];
+        offset += BytesTool::copy(field.Value, field.Length, 0, buffer, bufferLength, offset, field.Length);
+        Insert(field);
+    }
+
+    return 0x0;
+}
 int SCPSection1::_Write(uchar* buffer, int bufferLength, int offset)
 {
     for (int loper = 0; loper < _NrFields; loper++)
@@ -475,7 +513,137 @@ bool SCPSection1::isException(uchar* condition, int conditionLength, uchar tag)
 
     return (m >= 0) && (m < conditionLength) && (condition[m] == tag);
 }
+/// <summary>
+/// Function to anonymous this section.
+/// </summary>
+/// <param name="type">value to empty with</param>
+void SCPSection1::Anonymous(uchar type)
+{
+    for (int loper = 0; loper < _NrFields; loper++)
+    {
+        if (isException(_AnonymousFields, sizeof(_AnonymousFields), _Fields[loper].Tag)
+            && (_Fields[loper].Value != null))
+        {
+            if (_Fields[loper].Tag == 5)
+            {
+                SCPDate date2;
+                date2.Read(_Fields[loper].Value, _Fields[loper].Length, 0);
+                date2.Day = 1;
+                date2.Month = 1;
+                date2.Write(_Fields[loper].Value, _Fields[loper].Length, 0);
+            }
+            else
+            {
+                BytesTool::emptyBuffer(_Fields[loper].Value, _Fields[loper].Length, 0, _Fields[loper].Length - 1, type); //TODO check
+            }
+        }
+    }
+}
+/// <summary>
+/// Get encoding for text from language support code.
+/// </summary>
+/// <returns>used encoding</returns>
+std::string SCPSection1::getLanguageSupportCode()
+{
+    std::string enc;
+    getLanguageSupportCode(enc);
+    return enc;
+}
+/// <summary>
+/// Get encoding for text from language support code.
+/// </summary>
+/// <param name="enc">used encoding</param>
+/// <returns>0 if successfull</returns>
+int SCPSection1::getLanguageSupportCode(std::string& enc)
+{
+    enc = "ASCII";
+    int p = _SearchField(14);
 
+    if ((p >= 0)
+        && (_Fields[p].Value != null)
+        && (_Fields[p].Length > 16))
+    {
+        uchar lsc = _Fields[p].Value[16];
+
+        if ((lsc & 0x1) == 0x0)
+        {
+            return 0;
+        }
+        else if ((lsc & 0x3) == 0x1)
+        {
+            enc = "ISO-8859-1";
+            return 0;
+        }
+        else
+        {
+            string encName = "";
+
+            switch (lsc)//TODO add UTF-8
+            {
+                case 0x03:
+                    encName = "ISO-8859-2";
+                    break;
+
+                case 0x0b:
+                    encName = "ISO-8859-4";
+                    break;
+
+                case 0x13:
+                    encName = "ISO-8859-5";
+                    break;
+
+                case 0x1b:
+                    encName = "ISO-8859-6";
+                    break;
+
+                case 0x23:
+                    encName = "ISO-8859-7";
+                    break;
+
+                case 0x2b:
+                    encName = "ISO-8859-8";
+                    break;
+
+                case 0x33:
+                    encName = "ISO-8859-11";
+                    break;
+
+                case 0x3b:
+                    encName = "ISO-8859-15";
+                    break;
+
+                case 0x07:
+                    encName = "utf-16";
+                    break; //case 0x07: encName = "ISO-60646"; break;
+
+                case 0x0f: //encName = "JIS X0201-1976";
+                case 0x17: //encName = "JIS X0208-1997";
+                case 0x1f: //encName = "JIS X0212-1990";
+                    encName = "EUC-JP";
+                    break;
+
+                case 0x27:
+                    encName = "GB18030";
+                    break;
+
+                case 0x2f:
+                    encName = "ks_c_5601-1987";
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (encName.length() > 0)
+            {
+                enc = encName;
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
 /// <summary>
 /// Set language support code based on encoding.
 /// </summary>
@@ -634,7 +802,7 @@ int SCPSection1::setLanguageSupportCode(const std::string& enc)
 /// <returns>0 on succes</returns>
 int SCPSection1::getProtocolCompatibilityLevel(ProtocolCompatibility& pc)
 {
-    pc = 0;
+    //pc = 0;
     int p = _SearchField(14);
 
     if ((p >= 0)
@@ -780,9 +948,9 @@ int SCPSection1::getPatientAge(ushort& val, AgeDefinition& def)
         && (_Fields[p].Length == 3)
         && (_Fields[p].Value != null))
     {
-        val = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
+        val = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
 
-        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
+        switch (BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
         {
             case 1:
                 def = kAgeYears;
@@ -835,8 +1003,8 @@ Date SCPSection1::getPatientBirthDate()
         && (_Fields[p].Length == 4)
         && (_Fields[p].Value != null))
     {
-        SCPDate scpdate = new SCPDate();
-        scpdate.Read(_Fields[p].Value, _Fields[p].Value, _Fields[p].Length, 0);
+        SCPDate scpdate;
+        scpdate.Read(_Fields[p].Value, _Fields[p].Length, 0);
         return Date(scpdate.Year, scpdate.Month, scpdate.Day);
     }
 
@@ -875,9 +1043,9 @@ int SCPSection1::getPatientHeight(ushort& val, HeightDefinition& def)
         && (_Fields[p].Length == 3)
         && (_Fields[p].Value != null))
     {
-        val = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
+        val = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
 
-        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
+        switch (BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
         {
             case 1:
                 def = kHeightCentimeters;
@@ -923,9 +1091,9 @@ int SCPSection1::getPatientWeight(ushort& val, WeightDefinition& def)
         && (_Fields[p].Length == 3)
         && (_Fields[p].Value != null))
     {
-        val = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
+        val = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(val), true);
 
-        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
+        switch (BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, sizeof(val), 1, true))
         {
             case 1:
                 def = kWeightKilogram;
@@ -962,7 +1130,7 @@ int SCPSection1::setPatientWeight(ushort val, WeightDefinition def)
     field.Value = new uchar[field.Length];
     BytesTool::writeBytes(val, field.Value, field.Length, 0, sizeof(val), true);
     BytesTool::writeBytes((uchar)def, field.Value, field.Length, sizeof(val), sizeof(uchar), true);
-    return Insert(field) << 1;
+    return Insert(field);
 }
 
 Sex SCPSection1::getGender()
@@ -973,7 +1141,7 @@ Sex SCPSection1::getGender()
         && (_Fields[p].Length == 1)
         && (_Fields[p].Value != null))
     {
-        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, 1, true))
+        switch (BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, 1, true))
         {
             case 1:
                 return kSexMale;
@@ -1010,7 +1178,7 @@ Race SCPSection1::getPatientRace()
         && (_Fields[p].Length == 1)
         && (_Fields[p].Value != null))
     {
-        switch (BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, 1, true))
+        switch (BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, 1, true))
         {
             case 1:
                 return kRaceCaucasian;
@@ -1052,22 +1220,22 @@ AcquiringDeviceID SCPSection1::getAcqMachineID()
     {
         AcquiringDeviceID id = new AcquiringDeviceID();
         int offset = 0;
-        id.InstitutionNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.InstitutionNr), true);
+        id.InstitutionNr = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.InstitutionNr), true);
         offset += sizeof(id.InstitutionNr);
-        id.DepartmentNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DepartmentNr), true);
+        id.DepartmentNr = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DepartmentNr), true);
         offset += sizeof(id.DepartmentNr);
-        id.DeviceID = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceID), true);
+        id.DeviceID = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceID), true);
         offset += sizeof(id.DeviceID);
-        id.DeviceType = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceType), true);
+        id.DeviceType = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceType), true);
         offset += sizeof(id.DeviceType);
-        id.ManufactorID = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ManufactorID), true);
+        id.ManufactorID = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ManufactorID), true);
         offset += sizeof(id.ManufactorID);
-        offset += BytesTool.copy(id.ModelDescription, 0, _Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ModelDescription));
+        offset += BytesTool::copy(id.ModelDescription, sizeof(id.ModelDescription), 0, _Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ModelDescription));
         // Skip some not needed info.
         offset += 3;
-        id.DeviceCapabilities = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceCapabilities), true);
+        id.DeviceCapabilities = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceCapabilities), true);
         offset += sizeof(id.DeviceCapabilities);
-        id.ACFrequencyEnvironment = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ACFrequencyEnvironment), true);
+        id.ACFrequencyEnvironment = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ACFrequencyEnvironment), true);
         offset += sizeof(id.ACFrequencyEnvironment);
         return id;
     }
@@ -1151,22 +1319,22 @@ AcquiringDeviceID SCPSection1::getAnalyzingMachineID()
     {
         AcquiringDeviceID id = new AcquiringDeviceID();
         int offset = 0;
-        id.InstitutionNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.InstitutionNr), true);
+        id.InstitutionNr = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.InstitutionNr), true);
         offset += sizeof(id.InstitutionNr);
-        id.DepartmentNr = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DepartmentNr), true);
+        id.DepartmentNr = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DepartmentNr), true);
         offset += sizeof(id.DepartmentNr);
-        id.DeviceID = (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceID), true);
+        id.DeviceID = (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceID), true);
         offset += sizeof(id.DeviceID);
-        id.DeviceType = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceType), true);
+        id.DeviceType = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceType), true);
         offset += sizeof(id.DeviceType);
-        id.ManufactorID = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ManufactorID), true);
+        id.ManufactorID = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ManufactorID), true);
         offset += sizeof(id.ManufactorID);
-        offset += BytesTool.copy(id.ModelDescription, 0, _Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ModelDescription));
+        offset += BytesTool::copy(id.ModelDescription, sizeof(id.ModelDescription), 0, _Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ModelDescription));
         // Skip some not needed info.
         offset += 3;
-        id.DeviceCapabilities = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceCapabilities), true);
+        id.DeviceCapabilities = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.DeviceCapabilities), true);
         offset += sizeof(id.DeviceCapabilities);
-        id.ACFrequencyEnvironment = (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ACFrequencyEnvironment), true);
+        id.ACFrequencyEnvironment = (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, offset, sizeof(id.ACFrequencyEnvironment), true);
         offset += sizeof(id.ACFrequencyEnvironment);
         return id;
     }
@@ -1307,7 +1475,7 @@ ushort SCPSection1::getBaselineFilter()
         && (_Fields[p].Length == 2)
         && (_Fields[p].Value != null))
     {
-        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+        return (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
     }
 
     return 0;
@@ -1332,7 +1500,7 @@ ushort SCPSection1::getLowpassFilter()
         && (_Fields[p].Length == 2)
         && (_Fields[p].Value != null))
     {
-        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+        return (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
     }
 
     return 0;
@@ -1357,7 +1525,7 @@ uchar SCPSection1::getFilterBitmap()
         && (_Fields[p].Length == 1)
         && (_Fields[p].Value != null))
     {
-        return (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(uchar), true);
+        return (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(uchar), true);
     }
 
     return 0;
@@ -1397,7 +1565,7 @@ std::vector<string> SCPSection1::getFreeTextFields()
             {
                 if (_Fields[p + loper].Value != null)
                 {
-                    textVector.push_back(BytesTool.readString(_Encoding,
+                    textVector.push_back(BytesTool::readString(_Encoding,
                                          _Fields[p + loper].Value,
                                          _Fields[p + loper].Length,
                                          0,
@@ -1516,7 +1684,7 @@ ushort SCPSection1::getSystolicBloodPressure()
 
     if (p >= 0)
     {
-        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+        return (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
     }
 
     return 0;
@@ -1541,7 +1709,7 @@ ushort SCPSection1::getDiastolicBloodPressure()
 
     if (p >= 0)
     {
-        return (ushort) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
+        return (ushort) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(ushort), true);
     }
 
     return 0;
@@ -1560,7 +1728,7 @@ void SCPSection1::setDiastolicBloodPressure(ushort DiastolicBloodPressure)
     }
 }
 
-std::vector<Drug> SCPSection1::getsetDrugs()
+std::vector<Drug> SCPSection1::getDrugs()
 {
     std::vector<Drug> drugVector;
     int p = _SearchField(10);
@@ -1583,7 +1751,7 @@ std::vector<Drug> SCPSection1::getsetDrugs()
                     Drug drug;
                     drug.DrugClass = _Fields[p + loper].Value[1];
                     drug.ClassCode = _Fields[p + loper].Value[2];
-                    drug.TextDesciption = BytesTool.readString(_Encoding,
+                    drug.TextDesciption = BytesTool::readString(_Encoding,
                                           _Fields[p + loper].Value,
                                           _Fields[p + loper].Length,
                                           3,
@@ -1632,10 +1800,9 @@ std::vector<string> SCPSection1::getReferralIndication()
         {
             for (int loper = 0; loper < len; loper++)
             {
-                if ((_Fields[p + loper].Value != null)
-                    && (_Fields[p + loper].Length <= _Fields[p + loper].Value.Length))
+                if (_Fields[p + loper].Value != null)
                 {
-                    textVector.push_back(BytesTool.readString(_Encoding,
+                    textVector.push_back(BytesTool::readString(_Encoding,
                                          _Fields[p + loper].Value,
                                          _Fields[p + loper].Length,
                                          0,
@@ -1685,7 +1852,7 @@ uchar SCPSection1::getStatCode()
         && (_Fields[p].Value != null)
         && (_Fields[p].Length == sizeof(uchar)))
     {
-        return (uchar) BytesTool.readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(uchar), true);
+        return (uchar) BytesTool::readBytes(_Fields[p].Value, _Fields[p].Length, 0, sizeof(uchar), true);
     }
 
     return 0xff;

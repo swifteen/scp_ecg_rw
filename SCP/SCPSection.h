@@ -26,6 +26,19 @@ public:
     /// </summary>
     /// <param name="enc">encoding to use in section.</param>
     void SetEncoding(const string& encoding);
+    /// <summary>
+    /// Function to read an SCP Section.
+    /// </summary>
+    /// <param name="buffer">buffer to read from</param>
+    /// <param name="offset">position on buffer to start reading</param>
+    /// <returns>error:
+    /// 0x00) succes
+    /// 0x01) no buffer provided or buffer to small for header
+    /// 0x02) Section ID doesn't seem to be right
+    /// 0x04) buffer not big enough for entire section
+    /// 0x08) CRC Check Failed
+    /// rest) Section specific error </returns>
+    int Read(uchar* buffer, int bufferLength, int offset, int length);
 #if 0
     /// <summary>
     /// Function to write an SCP Section.
@@ -73,6 +86,13 @@ public:
     /// false not working</returns>
     virtual bool Works() = 0;
 protected:
+    /// <summary>
+    /// Hidden read function is called by Read().
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    virtual int _Read(uchar* buffer, int bufferLength, int offset) = 0;
     /// <summary>
     /// Hidden write function is called by Write().
     /// </summary>

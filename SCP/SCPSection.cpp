@@ -33,6 +33,64 @@ void SCPSection::SetEncoding(const string& encoding)
 {
     _Encoding = encoding;
 }
+/// <summary>
+/// Function to read an SCP Section.
+/// </summary>
+/// <param name="buffer">buffer to read from</param>
+/// <param name="offset">position on buffer to start reading</param>
+/// <returns>error:
+/// 0x00) succes
+/// 0x01) no buffer provided or buffer to small for header
+/// 0x02) Section ID doesn't seem to be right
+/// 0x04) buffer not big enough for entire section
+/// 0x08) CRC Check Failed
+/// rest) Section specific error </returns>
+int SCPSection::Read(uchar* buffer, int bufferLength, int offset, int length)
+{
+    Empty();
+
+    if ((buffer != null)
+        && (offset + Size) <= bufferLength)
+    {
+        int crcoffset = offset;
+        CRC = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(CRC), true);
+        offset += sizeof(CRC);
+        SectionID = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(SectionID), true);
+
+        if (SectionID != getSectionID())
+        {
+            return 0x2;
+        }
+
+        offset += sizeof(SectionID);
+        Length = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Length), true);
+
+        if (((length != Length)
+             && (SectionID != 0))
+            || (crcoffset + Length) > bufferLength)
+        {
+            return 0x4;
+        }
+
+        offset += sizeof(Length);
+        CRCTool crc;
+        crc.Init(CRCTool::CRCCode::CRC_CCITT);
+
+        if (CRC != crc.CalcCRCITT(buffer, bufferLength, crcoffset + sizeof(CRC), Length - sizeof(CRC)))
+        {
+            return 0x8;
+        }
+
+        SectionVersionNr = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(SectionVersionNr), true);
+        offset += sizeof(SectionVersionNr);
+        ProtocolVersionNr = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(ProtocolVersionNr), true);
+        offset += sizeof(ProtocolVersionNr);
+        offset += BytesTool::copy(Reserved, sizeof(Reserved), 0, buffer, bufferLength, offset, kReservedLength);
+        return _Read(buffer, bufferLength, offset) << 4;
+    }
+
+    return 0x1;
+}
 
 #if 0
 /// <summary>

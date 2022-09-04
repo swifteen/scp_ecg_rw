@@ -28,7 +28,6 @@ SCPSection6::SCPSection6()
     _Difference = 0;
     _Bimodal = 0;
     _DataLength.clear();
-    _DataRealLength.clear();
     _Data.clear();
     int size = _Data.size();
 
@@ -51,7 +50,58 @@ SCPSection6::~SCPSection6()
         }
     }
 }
+int SCPSection6::_Read(uchar* buffer, int bufferLength, int offset)
+{
+    if (_NrLeads == 0)
+    {
+        return 0x1;
+    }
 
+    _DataLength.resize(_NrLeads);
+    _Data.resize(_NrLeads);
+    int end = offset - Size + Length;
+    int startlen = (sizeof(_AVM) + sizeof(_TimeInterval) + sizeof(_Difference) + sizeof(_Bimodal));
+    startlen += _DataLength.size() * sizeof(_DataLength[0]);
+
+    if ((offset + startlen) > end)
+    {
+        return 0x2;
+    }
+
+    _AVM = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_AVM), true);
+    offset += sizeof(_AVM);
+    _TimeInterval = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_TimeInterval), true);
+    offset += sizeof(_TimeInterval);
+    _Difference = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Difference), true);
+    offset += sizeof(_Difference);
+    _Bimodal = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_Bimodal), true);
+    offset += sizeof(_Bimodal);
+    int sum = 0;
+
+    for (int loper = 0; loper < _Data.size(); loper++)
+    {
+        sum += (_DataLength[loper] = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(_DataLength[loper]), true));
+        offset += sizeof(_DataLength[loper]);
+    }
+
+    if ((offset + sum) > end)
+    {
+        return 0x4;
+    }
+
+    for (int loper = 0; loper < _Data.size(); loper++)
+    {
+        _Data[loper] = new uchar[_DataLength[loper]];
+        offset += BytesTool::copy(_Data[loper], _DataLength[loper], 0, buffer, bufferLength, offset, _DataLength[loper]);
+
+        if ((_DataLength[loper] & 0x1) == 0x1)
+        {
+            _DataLength[loper]++;
+        }
+    }
+
+    return 0x00;
+}
 int SCPSection6::_Write(uchar* buffer, int bufferLength, int offset)
 {
     BytesTool::writeBytes(_AVM, buffer, bufferLength, offset, sizeof(_AVM), true);
@@ -68,7 +118,7 @@ int SCPSection6::_Write(uchar* buffer, int bufferLength, int offset)
     {
         BytesTool::writeBytes(_DataLength[loper], buffer, bufferLength, offset, sizeof(_DataLength[loper]), true);
         offset += sizeof(_DataLength[loper]);
-        BytesTool::copy(buffer, bufferLength, offset2, _Data[loper], _DataRealLength[loper], 0, _DataRealLength[loper]);
+        BytesTool::copy(buffer, bufferLength, offset2, _Data[loper], _DataLength[loper], 0, _DataLength[loper]);
         offset2 += _DataLength[loper];
     }
 
@@ -82,7 +132,6 @@ void SCPSection6::_Empty()
     _Bimodal = 0;
     _DataLength.clear();
     _Data.clear();
-    _DataRealLength.clear();
 }
 int SCPSection6::_getLength()
 {
@@ -114,7 +163,7 @@ bool SCPSection6::Works()
         for (int loper = 0; loper < _Data.size(); loper++)
         {
             if ((_Data[loper] == null)
-                || (_DataLength[loper] < _DataRealLength[loper]))
+                || (_DataLength[loper] <= 0))
             {
                 return false;
             }
@@ -139,19 +188,19 @@ void SCPSection6::setNrLeads(ushort nrleads)
 /// <param name="tables">Huffman table to use during deconding</param>
 /// <param name="leadDefinition"></param>
 /// <returns>decoded leads</returns>
-short[][] SCPSection6::DecodeData(SCPSection2* tables,
-                                  SCPSection3* leadDefinition,
-                                  SCPSection4* qrsLocations,
-                                  int medianFreq)
+short** SCPSection6::DecodeData(SCPSection2* tables,
+                                SCPSection3* leadDefinition,
+                                SCPSection4* qrsLocations,
+                                int medianFreq)
 {
     int localFreq = getSamplesPerSecond();
 
     if (Works()
         && (tables != null)
-        && (tables.Works())
+        && (tables->Works())
         && (leadDefinition != null)
-        && (leadDefinition.Works())
-        && (leadDefinition.getNrLeads() == _Data.Length)
+        && (leadDefinition->Works())
+        && (leadDefinition->getNrLeads() == _DataLength.size())
         && (localFreq > 0))
     {
         if ((medianFreq <= 0)
@@ -162,7 +211,7 @@ short[][] SCPSection6::DecodeData(SCPSection2* tables,
         }
 
         if ((medianFreq < localFreq)
-            &&  !leadDefinition.isMediansUsed()
+            &&  !leadDefinition->isMediansUsed()
             && (_Bimodal == 0x0))
         {
             medianFreq = localFreq;
@@ -190,12 +239,12 @@ short[][] SCPSection6::DecodeData(SCPSection2* tables,
         }
 
         // Reset selected table.
-        tables.ResetSelect();
-        short[][] leads = new short[_Data.Length][];
+        tables->ResetSelect();
+        short** leads = new short*[_DataLength.size()];
 
-        for (int loper = 0; loper < _Data.Length; loper++)
+        for (int loper = 0; loper < _DataLength.size(); loper++)
         {
-            int time = (leadDefinition.getLeadLength(loper) * localFreq) / medianFreq;
+            int time = (leadDefinition->getLeadLength(loper) * localFreq) / medianFreq;
 
             // Bimodal part might be buggy unable to test.
             if ((localFreq != medianFreq)
@@ -204,27 +253,31 @@ short[][] SCPSection6::DecodeData(SCPSection2* tables,
                 int rate = medianFreq / localFreq;
                 // Calculate nr of samples stored in section.
                 time = 0;
-                int nrzones = qrsLocations.getNrProtectedZones();
+                int nrzones = qrsLocations->getNrProtectedZones();
 
                 for (int zone = 0; zone < nrzones; zone++)
                 {
-                    int begin = (qrsLocations.getProtectedStart(zone) >= leadDefinition.getLeadStart(loper) ? qrsLocations.getProtectedStart(zone) : leadDefinition.getLeadStart(loper));
-                    int end = (qrsLocations.getProtectedEnd(zone) <= leadDefinition.getLeadEnd(loper) ? qrsLocations.getProtectedEnd(zone) : leadDefinition.getLeadEnd(loper));
+                    int begin = (qrsLocations->getProtectedStart(zone) >= leadDefinition->getLeadStart(loper) ? qrsLocations->getProtectedStart(zone) : leadDefinition->getLeadStart(loper));
+                    int end = (qrsLocations->getProtectedEnd(zone) <= leadDefinition->getLeadEnd(loper) ? qrsLocations->getProtectedEnd(zone) : leadDefinition->getLeadEnd(loper));
                     begin = (end > begin ? end - begin + 1 : 0);
                     time += begin + (rate - (begin % rate));
                 }
 
-                time += ((leadDefinition.getLeadLength(loper) - time) * localFreq) / medianFreq;
+                time += ((leadDefinition->getLeadLength(loper) - time) * localFreq) / medianFreq;
             }
 
-            leads[loper] = tables.Decode(_Data[loper], 0, _Data[loper].Length, time, _Difference);
+            int decodeLength = 0;
+            leads[loper] = tables->Decode(_Data[loper], _DataLength[loper], 0, _DataLength[loper], time, _Difference, &decodeLength);
 
             // Check if lead was decoded
             if (leads[loper] == null)
             {
                 // return if lead decode failed.
+                delete [] leads;//TODO free other
                 return null;
             }
+
+#if 0
 
             if (localFreq != medianFreq)
             {
@@ -233,16 +286,17 @@ short[][] SCPSection6::DecodeData(SCPSection2* tables,
                 if (_Bimodal == 0x1)
                 {
                     int beginNonProtected = 0;
-                    int endNonProtected = qrsLocations.getProtectedStart(0);
+                    int endNonProtected = qrsLocations->getProtectedStart(0);
                     // Restructure bimodal data to length set in Section3.
-                    short[] temp = new short[leadDefinition.getLeadLength(loper)];
-                    int time1Offset = leadDefinition.getLeadStart(loper);
+                    int tempLength = leadDefinition->getLeadLength(loper);
+                    short* temp = new short[tempLength];
+                    int time1Offset = leadDefinition->getLeadStart(loper);
                     int time1 = 0;
                     int time2 = 0;
                     int zone = 0;
 
-                    while ((time1 < temp.Length)
-                           && (time2 < leads[loper].Length))
+                    while ((time1 < tempLength)
+                           && (time2 < decodeLength))
                     {
                         if (((time1 + time1Offset) >= beginNonProtected)
                             && ((time1 + time1Offset) < endNonProtected))
@@ -252,16 +306,16 @@ short[][] SCPSection6::DecodeData(SCPSection2* tables,
                                 temp[time1++] = leads[loper][time2];
                             }
 
-                            if ((time2 + ((endNonProtected - (time1 + time1Offset)) / rate)) >= leads[loper].Length)
+                            if ((time2 + ((endNonProtected - (time1 + time1Offset)) / rate)) >= decodeLength)
                             {
-                                endNonProtected -= ((time2 + ((endNonProtected - (time1 + time1Offset)) / rate)) - leads[loper].Length) * rate;
+                                endNonProtected -= ((time2 + ((endNonProtected - (time1 + time1Offset)) / rate)) - decodeLength) * rate;
                             }
 
                             endNonProtected -= rate + (rate >> 1);
 
                             while ((time1 + time1Offset) < endNonProtected)
                             {
-                                for (int i = 0; (i < rate) && (time1 < temp.Length); i++)
+                                for (int i = 0; (i < rate) && (time1 < tempLength); i++)
                                 {
                                     temp[time1++] = (short)(((leads[loper][time2 + 1] - leads[loper][time2]) / rate) * i + leads[loper][time2]);
                                 }
@@ -277,25 +331,25 @@ short[][] SCPSection6::DecodeData(SCPSection2* tables,
                             }
 
                             time2++;
-                            beginNonProtected = (zone == qrsLocations.getNrProtectedZones() ? temp.Length : qrsLocations.getProtectedEnd(zone));
+                            beginNonProtected = (zone == qrsLocations->getNrProtectedZones() ? tempLength : qrsLocations->getProtectedEnd(zone));
                         }
                         else
                         {
                             // This should never happen!!
-                            if (zone == qrsLocations.getNrProtectedZones())
+                            if (zone == qrsLocations->getNrProtectedZones())
                             {
                                 break;
                             }
 
-                            while (((time1 + time1Offset) < qrsLocations.getProtectedEnd(zone))
-                                   && (time1 < temp.Length)
-                                   && (time2 < leads[loper].Length))
+                            while (((time1 + time1Offset) < qrsLocations->getProtectedEnd(zone))
+                                   && (time1 < tempLength)
+                                   && (time2 < decodeLength))
                             {
                                 temp[time1++] = leads[loper][time2++];
                             }
 
                             zone++;
-                            endNonProtected = (zone == qrsLocations.getNrProtectedZones() ? temp.Length : qrsLocations.getProtectedStart(zone));
+                            endNonProtected = (zone == qrsLocations->getNrProtectedZones() ? tempLength : qrsLocations->getProtectedStart(zone));
                         }
                     }
 
@@ -303,9 +357,11 @@ short[][] SCPSection6::DecodeData(SCPSection2* tables,
                 }
                 else
                 {
-                    ECGTool.ResampleLead(leads[loper], localFreq, medianFreq, out leads[loper]);
+                    ECGTool::ResampleLead(leads[loper], localFreq, medianFreq, &leads[loper]);
                 }
             }
+
+#endif
         }
 
         return leads;
@@ -359,7 +415,6 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
 
         _Data.resize(nrleads);
         _DataLength.resize(nrleads);
-        _DataRealLength.resize(nrleads);
 
         for (int loper = 0; loper < nrleads; loper++)
         {
@@ -385,22 +440,22 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
                 {
                     // Calculate nr of samples stored in section.
                     time = 0;
-                    int nrzones = qrsLocations.getNrProtectedZones();
+                    int nrzones = qrsLocations->getNrProtectedZones();
 
                     for (int zone = 0; zone < nrzones; zone++)
                     {
-                        int begin = (qrsLocations.getProtectedStart(zone) >= leadDefinition.getLeadStart(loper) ? qrsLocations.getProtectedStart(zone) : leadDefinition.getLeadStart(loper));
-                        int end = (qrsLocations.getProtectedEnd(zone) <= leadDefinition.getLeadEnd(loper) ? qrsLocations.getProtectedEnd(zone) : leadDefinition.getLeadEnd(loper));
+                        int begin = (qrsLocations->getProtectedStart(zone) >= leadDefinition->getLeadStart(loper) ? qrsLocations->getProtectedStart(zone) : leadDefinition->getLeadStart(loper));
+                        int end = (qrsLocations->getProtectedEnd(zone) <= leadDefinition->getLeadEnd(loper) ? qrsLocations->getProtectedEnd(zone) : leadDefinition->getLeadEnd(loper));
                         begin = (end > begin ? end - begin + 1 : 0);
                         time += begin + (rate - (begin % rate));
                     }
 
-                    time += ((leadDefinition.getLeadLength(loper) - time) * localFreq) / medianFreq;
-                    int leadLength = leadDefinition.getLeadLength(loper);
+                    time += ((leadDefinition->getLeadLength(loper) - time) * localFreq) / medianFreq;
+                    int leadLength = leadDefinition->getLeadLength(loper);
                     time += ((leadLength - time) * localFreq) / medianFreq;
                     // Restructure bimodal data to length set in Section3.
                     temp = new short[time];
-                    int time2Offset = leadDefinition.getLeadStart(loper);
+                    int time2Offset = leadDefinition->getLeadStart(loper);
                     int time1 = 0;
                     int time2 = 0;
 
@@ -409,13 +464,13 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
                            && (time2 < data[loper].Length))
                     {
                         int zone = 0;
-                        int end = qrsLocations.getNrProtectedZones();
+                        int end = qrsLocations->getNrProtectedZones();
 
                         for (; zone < end; zone++)
                         {
-                            if ((qrsLocations.getProtectedLength(zone) > 0)
-                                && (time2 + time2Offset >= qrsLocations.getProtectedStart(zone))
-                                && (time2 + time2Offset <= qrsLocations.getProtectedEnd(zone)))
+                            if ((qrsLocations->getProtectedLength(zone) > 0)
+                                && (time2 + time2Offset >= qrsLocations->getProtectedStart(zone))
+                                && (time2 + time2Offset <= qrsLocations->getProtectedEnd(zone)))
                             {
                                 break;
                             }
@@ -461,7 +516,6 @@ int SCPSection6::EncodeData(std::vector<short*>& data,
             }
 
             _DataLength[loper] = (ushort) encodeLength;
-            _DataRealLength[loper] = (ushort) encodeLength;
 
             if ((_DataLength[loper] & 0x1) == 0x1)
             {

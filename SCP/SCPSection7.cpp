@@ -44,15 +44,15 @@ int SCPExtraMeasurements::Read(uchar* buffer, int bufferLength, int offset)
         return 0x1;
     }
 
-    VentRate = (ushort) BytesTool::readBytes(buffer, offset, sizeof(VentRate), true);
+    VentRate = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(VentRate), true);
     offset += sizeof(VentRate);
-    AtrialRate = (ushort) BytesTool::readBytes(buffer, offset, sizeof(AtrialRate), true);
+    AtrialRate = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(AtrialRate), true);
     offset += sizeof(AtrialRate);
-    QTc = (ushort) BytesTool::readBytes(buffer, offset, sizeof(QTc), true);
+    QTc = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(QTc), true);
     offset += sizeof(QTc);
-    FormulaType = (uchar) BytesTool::readBytes(buffer, offset, sizeof(FormulaType), true);
+    FormulaType = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(FormulaType), true);
     offset += sizeof(FormulaType);
-    TaggedFieldSize = (ushort) BytesTool::readBytes(buffer, offset, sizeof(TaggedFieldSize), true);
+    TaggedFieldSize = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(TaggedFieldSize), true);
     offset += sizeof(TaggedFieldSize);
 
     if (TaggedFieldSize > 0)
@@ -169,20 +169,20 @@ public:
     /// <param name="buffer">byte array to read from</param>
     /// <param name="offset">position to start reading</param>
     /// <returns>0 on success</returns>
-    public int Read(uchar* buffer, int bufferLength, int offset)
+    int Read(uchar* buffer, int bufferLength, int offset)
     {
         if ((offset + Size) > bufferLength)
         {
             return 0x1;
         }
 
-        Type = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Type), true);
+        Type = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Type), true);
         offset += sizeof(Type);
-        Source = (uchar) BytesTool.readBytes(buffer, offset, sizeof(Source), true);
+        Source = (uchar) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Source), true);
         offset += sizeof(Source);
-        TriggerIndex = (ushort) BytesTool.readBytes(buffer, offset, sizeof(TriggerIndex), true);
+        TriggerIndex = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(TriggerIndex), true);
         offset += sizeof(TriggerIndex);
-        PulseWidth = (ushort) BytesTool.readBytes(buffer, offset, sizeof(PulseWidth), true);
+        PulseWidth = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(PulseWidth), true);
         offset += sizeof(PulseWidth);
         return 0x0;
     }
@@ -249,21 +249,21 @@ public:
             return 0x1;
         }
 
-        Ponset = (ushort) BytesTool::readBytes(buffer, offset, sizeof(Ponset), true);
+        Ponset = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Ponset), true);
         offset += sizeof(Ponset);
-        Poffset = (ushort) BytesTool::readBytes(buffer, offset, sizeof(Poffset), true);
+        Poffset = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Poffset), true);
         offset += sizeof(Poffset);
-        QRSonset = (ushort) BytesTool::readBytes(buffer, offset, sizeof(QRSonset), true);
+        QRSonset = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(QRSonset), true);
         offset += sizeof(QRSonset);
-        QRSoffset = (ushort) BytesTool::readBytes(buffer, offset, sizeof(QRSoffset), true);
+        QRSoffset = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(QRSoffset), true);
         offset += sizeof(QRSoffset);
-        Toffset = (ushort) BytesTool::readBytes(buffer, offset, sizeof(Toffset), true);
+        Toffset = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Toffset), true);
         offset += sizeof(Toffset);
-        Paxis = (short) BytesTool::readBytes(buffer, offset, sizeof(Paxis), true);
+        Paxis = (short) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Paxis), true);
         offset += sizeof(Paxis);
-        QRSaxis = (short) BytesTool::readBytes(buffer, offset, sizeof(QRSaxis), true);
+        QRSaxis = (short) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(QRSaxis), true);
         offset += sizeof(QRSaxis);
-        Taxis = (short) BytesTool::readBytes(buffer, offset, sizeof(Taxis), true);
+        Taxis = (short) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Taxis), true);
         offset += sizeof(Taxis);
         return 0x0;
     }
@@ -335,9 +335,9 @@ public:
             return 0x1;
         }
 
-        Time = (ushort) BytesTool::readBytes(buffer, offset, sizeof(Time), true);
+        Time = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Time), true);
         offset += sizeof(Time);
-        Amplitude = (short) BytesTool::readBytes(buffer, offset, sizeof(Amplitude), true);
+        Amplitude = (short) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Amplitude), true);
         offset += sizeof(Amplitude);
         return 0x0;
     }
@@ -425,13 +425,13 @@ int SCPSection7::_Read(uchar* buffer, int bufferLength, int offset)
 
     if (_NrRefTypeQRS > 0)
     {
-        if (((offset + (_NrRefTypeQRS * SCPMeasurement.Size)) > end)
+        if (((offset + (_NrRefTypeQRS * SCPMeasurement::Size)) > end)
             && (_NrSpikes == 0))
         {
-            _NrRefTypeQRS = (uchar)((end - offset) / SCPMeasurement.Size);
+            _NrRefTypeQRS = (uchar)((end - offset) / SCPMeasurement::Size);
         }
 
-        if ((offset + (_NrRefTypeQRS * SCPMeasurement.Size)) > end)
+        if ((offset + (_NrRefTypeQRS * SCPMeasurement::Size)) > end)
         {
             return 0x2;
         }
@@ -442,14 +442,14 @@ int SCPSection7::_Read(uchar* buffer, int bufferLength, int offset)
             for (int loper = 0; loper < _NrRefTypeQRS; loper++)
             {
                 _Measurements[loper].Read(buffer, bufferLength, offset);
-                offset += SCPMeasurement.Size;
+                offset += SCPMeasurement::Size;
             }
         }
     }
 
     if (_NrSpikes > 0)
     {
-        if ((offset + (_NrSpikes * SCPSpike.Size)) > end)
+        if ((offset + (_NrSpikes * SCPSpike::Size)) > end)
         {
             return 0x4;
         }
@@ -459,10 +459,10 @@ int SCPSection7::_Read(uchar* buffer, int bufferLength, int offset)
         for (int loper = 0; loper < _NrSpikes; loper++)
         {
             _Spikes[loper].Read(buffer, bufferLength, offset);
-            offset += SCPSpike.Size;
+            offset += SCPSpike::Size;
         }
 
-        if (offset + (_NrSpikes * SCPSpikeInfo.Size) > end)
+        if (offset + (_NrSpikes * SCPSpikeInfo::Size) > end)
         {
             _AfterSpikes = false;
             _AfterSpikesInfo = false;
@@ -475,7 +475,7 @@ int SCPSection7::_Read(uchar* buffer, int bufferLength, int offset)
         for (int loper = 0; loper < _NrSpikes; loper++)
         {
             _SpikesInfo[loper].Read(buffer, bufferLength, offset);
-            offset += SCPSpikeInfo.Size;
+            offset += SCPSpikeInfo::Size;
         }
     }
 
@@ -761,7 +761,7 @@ int SCPSection7::getGlobalMeasurements(GlobalMeasurements& mes)
             {
                 case 1:
                 case 2:
-                    mes.setQTcType((GlobalMeasurements.QTcCalcType)(_ExtraMeasurements.FormulaType - 1));
+                    mes.setQTcType((GlobalMeasurement::QTcCalcType)(_ExtraMeasurements.FormulaType - 1));
                     break;
 
                 default:

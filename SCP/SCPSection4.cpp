@@ -134,9 +134,9 @@ public:
             return 0x1;
         }
 
-        Start = (int) BytesTool::readBytes(buffer, offset, sizeof(Start), true);
+        Start = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Start), true);
         offset += sizeof(Start);
-        End = (int) BytesTool::readBytes(buffer, offset, sizeof(End), true);
+        End = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(End), true);
         offset += sizeof(End);
         return 0x0;
     }
@@ -343,6 +343,19 @@ bool SCPSection4::Works()
 }
 #if 0
 /// <summary>
+/// Function to get length of median.
+/// </summary>
+/// <returns>length of median data.</returns>
+ushort SCPSection4::getMedianLength()
+{
+    if (Works())
+    {
+        return _MedianDataLength;
+    }
+
+    return 0;
+}
+/// <summary>
 /// Function to add median data to residual data.
 /// </summary>
 /// <remarks>both signals must have the same sample rate and AVM</remarks>
@@ -485,20 +498,20 @@ int SCPSection4::SubtractMedians(SCPSection3 definition, short[][] rhythm, short
 /// Function to get nr of protected zones.
 /// </summary>
 /// <returns>nr of protected zones</returns>
-public int getNrProtectedZones()
+int SCPSection4::getNrProtectedZones()
 {
-    return (_Protected != null ? _Protected.Length : 0);
+    return (_Protected.size() > 0 ? _Protected.size() : 0);
 }
 /// <summary>
 /// Function to get start of protected zone.
 /// </summary>
 /// <param name="nr">nr of protected zone</param>
 /// <returns>start sample nr of protected zone</returns>
-public int getProtectedStart(int nr)
+int SCPSection4::getProtectedStart(int nr)
 {
-    if ((_Protected != null)
+    if ((_Protected.size() > 0)
         && (nr >= 0)
-        && (nr < _Protected.Length))
+        && (nr < _Protected.size()))
     {
         return _Protected[nr].Start;
     }
@@ -510,11 +523,11 @@ public int getProtectedStart(int nr)
 /// </summary>
 /// <param name="nr">nr of protected zone</param>
 /// <returns>end sample nr of protected zone</returns>
-public int getProtectedEnd(int nr)
+int SCPSection4::getProtectedEnd(int nr)
 {
-    if ((_Protected != null)
+    if ((_Protected.size() > 0)
         && (nr >= 0)
-        && (nr < _Protected.Length))
+        && (nr < _Protected.size()))
     {
         return _Protected[nr].End;
     }
@@ -526,17 +539,20 @@ public int getProtectedEnd(int nr)
 /// </summary>
 /// <param name="nr">nr of protected zone</param>
 /// <returns>length of protected zone in samples</returns>
-public int getProtectedLength(int nr)
+int SCPSection4::getProtectedLength(int nr)
 {
-    if ((_Protected != null)
+    if ((_Protected.size() > 0)
         && (nr >= 0)
-        && (nr < _Protected.Length))
+        && (nr < _Protected.size()))
     {
+#if 0
+
         if (_Protected[nr] == null)
         {
             return 0;
         }
 
+#endif
         int templen = _Protected[nr].End - _Protected[nr].Start;
         return (templen > 0 ? templen + 1 : 0);
     }
@@ -621,18 +637,18 @@ int SCPSection4::getSignals(Signals& signals)
 
         if (_NrQRS == 0)
         {
-            signals.QRSZone.clear();
+            signals.qrsZone.clear();
         }
         else
         {
-            signals.QRSZone.resize(_NrQRS);
+            signals.qrsZone.resize(_NrQRS);
 
             for (int loper = 0; loper < _NrQRS; loper++)
             {
-                signals.QRSZone[loper].Type = _Subtraction[loper].Type;
-                signals.QRSZone[loper].Start = _Subtraction[loper].Start - 1;
-                signals.QRSZone[loper].Fiducial = _Subtraction[loper].Fiducial;
-                signals.QRSZone[loper].End = _Subtraction[loper].End;
+                signals.qrsZone[loper].Type = _Subtraction[loper].Type;
+                signals.qrsZone[loper].Start = _Subtraction[loper].Start - 1;
+                signals.qrsZone[loper].Fiducial = _Subtraction[loper].Fiducial;
+                signals.qrsZone[loper].End = _Subtraction[loper].End;
             }
         }
 
