@@ -1,11 +1,75 @@
 #ifndef _SCPSECTION0_H_
 #define _SCPSECTION0_H_
 #include "SCPSection.h"
+#include "BytesTool.h"
+
+using namespace Communication_IO_Tools;
 
 namespace ECGConversion
 {
 namespace SCP
 {
+/// <summary>
+/// Class containing a SCP pointer.
+/// </summary>
+class SCPPointer
+{
+public:
+    SCPPointer()
+    {
+    }
+    /// <summary>
+    /// Function to read SCP pointer.
+    /// </summary>
+    /// <param name="buffer">byte array to read from</param>
+    /// <param name="offset">position to start reading</param>
+    /// <returns>0 on success</returns>
+    int Read(uchar* buffer, int bufferLength, int offset)
+    {
+        if ((offset + Size) > bufferLength)
+        {
+            return 0x1;
+        }
+
+        Nr = (ushort) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Nr), true);
+        offset += sizeof(Nr);
+        Length = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Length), true);
+        offset += sizeof(Length);
+        Index = (int) BytesTool::readBytes(buffer, bufferLength, offset, sizeof(Index), true);
+        offset += sizeof(Index);
+        return 0x0;
+    }
+    /// <summary>
+    /// Function to write SCP pointer.
+    /// </summary>
+    /// <param name="buffer">byte array to write section into</param>
+    /// <param name="offset">position to start writing</param>
+    /// <returns>0 on success</returns>
+    int Write(uchar* buffer, int bufferLength, int offset)
+    {
+        if ((offset + Size) > bufferLength)
+        {
+            SCP_PE("out of range,offset: %d,Size: %d,bufferLength: %d\n", offset, Size, bufferLength);
+            return 0x1;
+        }
+
+        BytesTool::writeBytes(Nr, buffer, bufferLength, offset, sizeof(Nr), true);
+        offset += sizeof(Nr);
+        BytesTool::writeBytes(Length, buffer, bufferLength, offset, sizeof(Length), true);
+        offset += sizeof(Length);
+        BytesTool::writeBytes(Index, buffer, bufferLength, offset, sizeof(Index), true);
+        offset += sizeof(Index);
+        SCP_PD("write over,offset: %d,Size: %d,bufferLength: %d\n", offset, Size, bufferLength);
+        return 0x0;
+    }
+public:
+    static int Size;//类的const变量在构造函数初始化列表中完成初始化
+    ushort Nr;
+    int Length;
+    int Index;
+};
+
+
 /// <summary>
 /// Class contains section 0 (Pointer section).
 /// </summary>
@@ -18,6 +82,7 @@ private:
     };
 public:
     SCPSection0();
+    virtual ~SCPSection0();
     ushort getSectionID();
     bool Works();
     /// <summary>
@@ -93,7 +158,7 @@ private:
     static ushort _SectionID;
     static int _NrMandatory;
 
-    class SCPPointer;
+    //class SCPPointer;
     // Part of the stored Data Structure.
     std::vector<SCPPointer> _MandatoryPointers;
     std::vector<SCPPointer> _OptionalPointers;

@@ -1,4 +1,4 @@
-project(scp_ecg_writer)
+project(scp_ecg_rw)
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 #add C++11 support
 set (CMAKE_CXX_STANDARD 11)
@@ -12,6 +12,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined")
 #库输出目录 
 SET(out_dir "${PROJECT_SOURCE_DIR}/build")
 
+#启用测试功能
+enable_testing()
 
 #add_subdirectory(anasys)
 aux_source_directory(${PROJECT_SOURCE_DIR} Root_FILES)
@@ -41,18 +43,24 @@ include_directories(${PROJECT_SOURCE_DIR}
 
 #add_definitions(-DBUILDING_DLL)
 
-add_executable(${PROJECT_NAME} 
-			${Root_FILES} 
-			${Tools_FILES} 
-            ${ECGDemographics_FILES} 
-            ${ECGLeadMeasurements_FILES} 
-            ${ECGGlobalMeasurements_FILES}
-            ${ECGDiagnostic_FILES}
-			${ECGSignals_FILES}
-			${SCP_FILES}
-			)
+add_library(${PROJECT_NAME} 
+		${Root_FILES} 
+		${Tools_FILES} 
+		${ECGDemographics_FILES} 
+		${ECGLeadMeasurements_FILES} 
+		${ECGGlobalMeasurements_FILES}
+		${ECGDiagnostic_FILES}
+		${ECGSignals_FILES}
+		${SCP_FILES}
+)
 
 target_link_libraries(${PROJECT_NAME}  iconv)
+
+add_executable(test_scp_write test/TestScpEcgWriter.cpp)
+target_link_libraries(test_scp_write ${PROJECT_NAME})
+
+#添加测试目录
+add_subdirectory(tests)
 
 # add the install targets
 install (TARGETS ${PROJECT_NAME}  DESTINATION ${out_dir})
