@@ -848,11 +848,13 @@ string SCPSection1::getText(uchar tag)//TODO
 
     if ((p >= 0)
         && (_Fields[p].Value != null)
-        /*&&  (_Fields[p].Length <= _Fields[p].Value.Length)*/)//TODO检查长度限制
+        && (_Fields[p].Length > 0))
     {
+        SCP_PD("tag:%d,text Length:%d\n", tag, _Fields[p].Length);
         return BytesTool::readString(_Encoding, _Fields[p].Value, _Fields[p].Length, 0, _Fields[p].Length);;
     }
 
+    SCP_PE("tag:%d,text is empty\n", tag);
     return "";
 }
 /// <summary>
