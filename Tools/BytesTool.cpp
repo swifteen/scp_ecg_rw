@@ -106,7 +106,7 @@ string BytesTool::readString(uchar* buffer, int bufferLength, int offset, int le
 /// <returns>a string</returns>
 string BytesTool::readString(const std::string& srcEncoding, uchar* buffer, int bufferLength, int offset, int length)
 {
-    string ret = "";
+    string resultStr = "";
 #if 0
     int strLen = stringLength(srcEncoding, buffer, bufferLength, offset, length);
 
@@ -124,7 +124,61 @@ string BytesTool::readString(const std::string& srcEncoding, uchar* buffer, int 
     }
 
 #endif
-    return ret;
+
+    if ((bufferLength <= 0) || (buffer == null))
+    {
+        return resultStr;
+    }
+
+    char* src_cstr = new char [bufferLength];
+
+    if (src_cstr == null)
+    {
+        SCP_PE("memory not enough [%d]\n", bufferLength);
+        return resultStr;
+    }
+
+    memset(src_cstr, 0, bufferLength);
+    snprintf(src_cstr, bufferLength, "%s", buffer);
+    size_t src_cstr_len = strlen(src_cstr) + 1;
+    //The maximum number of characters produced by decoding the specified number of bytes.
+    size_t nrChars = (bufferLength < (offset + length)) ? bufferLength - offset : length;
+    nrChars = (bufferLength < nrChars) ? bufferLength : nrChars;
+
+    if (nrChars > 0)
+    {
+        /* Assign enough space to put the UTF-8. */
+        size_t outbytesleft = 2 * nrChars;
+        char* outbuf = new char[outbytesleft];
+
+        if (outbuf == null)
+        {
+            delete[] src_cstr;
+            SCP_PE("memory not enough [%d]\n", (int)outbytesleft);
+            return resultStr;
+        }
+
+        memset(outbuf, 0, outbytesleft);
+        int ret = convert_charset(srcEncoding.c_str(), "UTF-8", src_cstr, src_cstr_len, outbuf, &outbytesleft);
+
+        if (0 == ret)
+        {
+            resultStr = string(outbuf);
+            SCP_PD("convert_charset success [%s]\n", outbuf);
+        }
+        else
+        {
+            SCP_PE("iconv failed: in string '%s', length %d, "
+                   "out string '%s', length %d \n",
+                   src_cstr, (int)src_cstr_len, outbuf, (int)outbytesleft);
+            resultStr = string(src_cstr);
+        }
+
+        delete[] outbuf;
+    }
+
+    delete[] src_cstr;
+    return resultStr;
 }
 /// <summary>
 /// Function to calculate length of string in buffer starting at an offset.
@@ -258,12 +312,13 @@ void BytesTool::writeString(const std::string& dstEncoding,
 
             if (0 == ret)
             {
-                memcpy(buffer + offset, outbuf, outbytesleft);
+                memcpy(buffer + offset, outbuf, strlen(outbuf) + 1);
+                // SCP_PD("outbuf[%s],outbytesleft[%d][%d],buffer[%s]\n", outbuf,outbytesleft,strlen(outbuf),buffer);
             }
             else
             {
-                SCP_PD("iconv failed: in string '%s', length %d, "
-                       "out string '%s', length %d",
+                SCP_PE("iconv failed: in string '%s', length %d, "
+                       "out string '%s', length %d\n",
                        src_cstr, (int)src_cstr_len, outbuf, (int)outbytesleft);
                 memcpy(buffer + offset, src_cstr, src_cstr_len);
             }
