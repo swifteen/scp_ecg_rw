@@ -139,11 +139,11 @@ string BytesTool::readString(const std::string& srcEncoding, uchar* buffer, int 
     }
 
     memset(src_cstr, 0, bufferLength);
-    snprintf(src_cstr, bufferLength, "%s", buffer);
-    size_t src_cstr_len = strlen(src_cstr) + 1;
     //The maximum number of characters produced by decoding the specified number of bytes.
     size_t nrChars = (bufferLength < (offset + length)) ? bufferLength - offset : length;
     nrChars = (bufferLength < nrChars) ? bufferLength : nrChars;
+    memcpy(src_cstr, buffer + offset, nrChars); //need add offset
+    size_t src_cstr_len = strlen(src_cstr) + 1;
 
     if (nrChars > 0)
     {
@@ -164,7 +164,6 @@ string BytesTool::readString(const std::string& srcEncoding, uchar* buffer, int 
         if (0 == ret)
         {
             resultStr = string(outbuf);
-            SCP_PD("convert_charset success [%s]\n", outbuf);
         }
         else
         {
@@ -313,7 +312,7 @@ void BytesTool::writeString(const std::string& dstEncoding,
             if (0 == ret)
             {
                 memcpy(buffer + offset, outbuf, strlen(outbuf) + 1);
-                // SCP_PD("outbuf[%s],outbytesleft[%d][%d],buffer[%s]\n", outbuf,outbytesleft,strlen(outbuf),buffer);
+                //SCP_PD("offset[%d]src.c_str[%s],outbuf[%s],outbytesleft[%d][%d],buffer[%s]\n", offset,src.c_str(),outbuf,outbytesleft,strlen(outbuf),buffer + offset);
             }
             else
             {

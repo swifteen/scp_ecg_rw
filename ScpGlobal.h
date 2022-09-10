@@ -68,8 +68,15 @@ static void scp_print_local_time()
 #define SCP_DUMP_GREEN printf("\033[0;32;32m")
 #define SCP_DUMP_NONE printf("\033[m")
 
+#define SCP_LOG_DEBUG
+#ifdef SCP_LOG_DEBUG
 #define SCP_PD(msg, args...)        do{SCP_DUMP_GREEN; SCP_PRINT_LOCAL_TIME;printf("[SCP-ECG] DEBUG! %s::%s::%d: ", __FILENAME__, __FUNCTION__, __LINE__);printf(msg, ##args);SCP_DUMP_NONE;}while(0)
 #define SCP_PW(msg, args...)        do{SCP_DUMP_YELLOW; SCP_PRINT_LOCAL_TIME;printf("[SCP-ECG] WARNING! %s::%s::%d: ", __FILENAME__, __FUNCTION__, __LINE__);printf(msg, ##args);SCP_DUMP_NONE;}while(0)
 #define SCP_PE(msg, args...)        do{SCP_DUMP_RED; SCP_PRINT_LOCAL_TIME;printf("[SCP-ECG] ERROR! %s::%s::%d: ", __FILENAME__, __FUNCTION__, __LINE__);printf(msg, ##args);SCP_DUMP_NONE;}while(0)
+#else
+#define SCP_PD(msg, args...)
+#define SCP_PW(msg, args...)
+#define SCP_PE(msg, args...)
+#endif
 
 #endif  /*#ifndef _SCPGLOBAL_H_*/

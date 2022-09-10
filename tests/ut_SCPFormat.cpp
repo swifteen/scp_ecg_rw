@@ -133,8 +133,8 @@ static int DemographicWrite(IDemographic* dst)
     dst->setFilterBitmap(10);
     std::vector<string> FreeTextFields;
     FreeTextFields.clear();
-    string freeText = "test freeText";
-    FreeTextFields.push_back(freeText);
+    FreeTextFields.push_back("test freeText1");
+    FreeTextFields.push_back("test freeText2");
     dst->setFreeTextFields(FreeTextFields);
     dst->setSequenceNr("src.SequenceNr");
     dst->setAcqInstitution("src.AcqInstitution");
@@ -148,12 +148,13 @@ static int DemographicWrite(IDemographic* dst)
     dst->setDiastolicBloodPressure(60);
     std::vector<Drug> Drugs;
     Drugs.clear();
-    Drugs.push_back(Drug(1, 2, "Drug TextDesciption"));
+    Drugs.push_back(Drug(1, 2, "Drug TextDesciption1"));
+    Drugs.push_back(Drug(3, 4, "Drug TextDesciption2"));
     dst->setDrugs(Drugs);
     std::vector<string> ReferralIndication;
     ReferralIndication.clear();
-    string referralText = "test referralText";
-    ReferralIndication.push_back(referralText);
+    ReferralIndication.push_back("test referralText1");
+    ReferralIndication.push_back("test referralText2");
     dst->setReferralIndication(ReferralIndication);
     dst->setRoomDescription("src.RoomDescription");
     dst->setStatCode(212);
@@ -175,5 +176,83 @@ TEST_F(ut_SCPFormat, DemographicRW)
     EXPECT_STREQ(dst->getSecondLastName().c_str(), "src.SecondLastName");
     //EXPECT_STREQ(dst->getPrefixName().c_str(), "src.PrefixName");//The protocol is not currently supported
     //EXPECT_STREQ(dst->getSuffixName().c_str(), "src.SuffixName");//The protocol is not currently supported
+    ushort val = 0;
+    AgeDefinition age = kAgeUnspecified;
+    ASSERT_EQ(dst->getPatientAge(val, age), 0);
+    EXPECT_EQ(val, 20);
+    EXPECT_EQ(age, kAgeYears);
+    Date date = dst->getPatientBirthDate();
+    EXPECT_EQ(date.Year, 1988);
+    EXPECT_EQ(date.Month, 1);
+    EXPECT_EQ(date.Day, 18);
+    HeightDefinition height = kHeightUnspecified;
+    val = 0;
+    ASSERT_EQ(dst->getPatientHeight(val, height), 0);
+    EXPECT_EQ(val, 170);
+    EXPECT_EQ(height, kHeightCentimeters);
+    WeightDefinition weight = kWeightUnspecified;
+    val = 0;
+    ASSERT_EQ(dst->getPatientWeight(val, weight), 0);
+    EXPECT_EQ(val, 50);
+    EXPECT_EQ(weight, kWeightKilogram);
+    Sex sex = dst->getGender();
+    EXPECT_EQ(sex, kSexMale);
+    Race race = dst->getPatientRace();
+    EXPECT_EQ(race, kRaceCaucasian);
+    uchar ModelDescription[6];
+    AcquiringDeviceID AcqMachineID = dst->getAcqMachineID();
+    EXPECT_EQ(AcqMachineID.InstitutionNr, 1);
+    EXPECT_EQ(AcqMachineID.DepartmentNr, 1);
+    EXPECT_EQ(AcqMachineID.DeviceID, 1244);
+    EXPECT_EQ(AcqMachineID.DeviceType, 1);
+    EXPECT_EQ(AcqMachineID.ManufactorID, 1);
+    EXPECT_EQ(AcqMachineID.DeviceCapabilities, 1);  // Is defined in SCP Section1 tag 14 uchar 18.
+    EXPECT_EQ(AcqMachineID.ACFrequencyEnvironment, 1);  // Is defined in SCP Section1 tag 14 uchar 19.
+    AcquiringDeviceID AnalyzingMachineID = dst->getAnalyzingMachineID();
+    EXPECT_EQ(AnalyzingMachineID.InstitutionNr, 1);
+    EXPECT_EQ(AnalyzingMachineID.DepartmentNr, 1);
+    EXPECT_EQ(AnalyzingMachineID.DeviceID, 1244);
+    EXPECT_EQ(AnalyzingMachineID.DeviceType, 1);
+    EXPECT_EQ(AnalyzingMachineID.ManufactorID, 1);
+    EXPECT_EQ(AnalyzingMachineID.DeviceCapabilities, 1);  // Is defined in SCP Section1 tag 14 uchar 18.
+    EXPECT_EQ(AnalyzingMachineID.ACFrequencyEnvironment, 1);  // Is defined in SCP Section1 tag 14 uchar 19.
+    DateTime dateTime = dst->getTimeAcquisition();
+    EXPECT_EQ(dateTime.Year, 2021);
+    EXPECT_EQ(dateTime.Month, 12);
+    EXPECT_EQ(dateTime.Day, 12);
+    EXPECT_EQ(dateTime.Hour, 20);
+    EXPECT_EQ(dateTime.Minute, 0);
+    EXPECT_EQ(dateTime.Second, 0);
+    EXPECT_EQ(dst->getBaselineFilter(), 50);
+    EXPECT_EQ(dst->getLowpassFilter(), 10);
+    EXPECT_EQ(dst->getFilterBitmap(), 10);
+    std::vector<string> FreeTextFields = dst->getFreeTextFields();
+    ASSERT_EQ(FreeTextFields.size(), 2);
+    EXPECT_STREQ(FreeTextFields.at(0).c_str(), "test freeText1");
+    EXPECT_STREQ(FreeTextFields.at(1).c_str(), "test freeText2");
+    EXPECT_STREQ(dst->getSequenceNr().c_str(), "src.SequenceNr");
+    EXPECT_STREQ(dst->getAcqInstitution().c_str(), "src.AcqInstitution");
+    EXPECT_STREQ(dst->getAnalyzingInstitution().c_str(), "src.AnalyzingInstitution");
+    EXPECT_STREQ(dst->getAcqDepartment().c_str(), "src.AcqDepartment");
+    EXPECT_STREQ(dst->getAnalyzingDepartment().c_str(), "src.AnalyzingDepartment");
+    EXPECT_STREQ(dst->getReferringPhysician().c_str(), "src.ReferringPhysician");
+    EXPECT_STREQ(dst->getOverreadingPhysician().c_str(), "src.OverreadingPhysician");
+    EXPECT_STREQ(dst->getTechnicianDescription().c_str(), "src.TechnicianDescription");
+    EXPECT_EQ(dst->getSystolicBloodPressure(), 50);
+    EXPECT_EQ(dst->getDiastolicBloodPressure(), 60);
+    std::vector<Drug> Drugs = dst->getDrugs();
+    ASSERT_EQ(Drugs.size(), 2);
+    EXPECT_EQ(Drugs.at(0).DrugClass, 1);
+    EXPECT_EQ(Drugs.at(0).ClassCode, 2);
+    EXPECT_STREQ(Drugs.at(0).TextDesciption.c_str(), "Drug TextDesciption1");
+    EXPECT_EQ(Drugs.at(1).DrugClass, 3);
+    EXPECT_EQ(Drugs.at(1).ClassCode, 4);
+    EXPECT_STREQ(Drugs.at(1).TextDesciption.c_str(), "Drug TextDesciption2");
+    std::vector<string> ReferralIndication = dst->getReferralIndication();
+    ASSERT_EQ(ReferralIndication.size(), 2);
+    EXPECT_STREQ(ReferralIndication.at(0).c_str(), "test referralText1");
+    EXPECT_STREQ(ReferralIndication.at(1).c_str(), "test referralText2");
+    EXPECT_STREQ(dst->getRoomDescription().c_str(), "src.RoomDescription");
+    EXPECT_EQ(dst->getStatCode(), 212);
 }
 

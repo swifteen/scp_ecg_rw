@@ -1775,12 +1775,18 @@ void SCPSection1::setDrugs(std::vector<Drug>& Drugs)
     {
         SCPHeaderField field;
         field.Tag = 10;
-        field.Length = (ushort)(4 + Drugs[loper].TextDesciption.length()); //TODO 这里字符串的长度是否需要加1
+        field.Length = (ushort)(4 +
+                                (Drugs[loper].TextDesciption.length() > 0 ? Drugs[loper].TextDesciption.length() + 1 : 0));
         field.Value = new uchar[field.Length];
         field.Value[0] = 0;
         field.Value[1] = Drugs[loper].DrugClass;
         field.Value[2] = Drugs[loper].ClassCode;
-        BytesTool::writeString(_Encoding, Drugs[loper].TextDesciption, field.Value, field.Length, 3, field.Length - 3);
+        BytesTool::writeString(_Encoding,
+                               Drugs[loper].TextDesciption,
+                               field.Value,
+                               field.Length,
+                               3,
+                               field.Length - 3);
         Insert(field);
     }
 }
@@ -1798,11 +1804,11 @@ std::vector<string> SCPSection1::getReferralIndication()
 
         for (; ((p + len) < _NrFields) && (_Fields[p + len].Tag == 13); len++) {}
 
-        if (len < 0)
+        if (len > 0)
         {
             for (int loper = 0; loper < len; loper++)
             {
-                if (_Fields[p + loper].Value != null)
+                if ((_Fields[p + loper].Length > 0) && (_Fields[p + loper].Value != null))
                 {
                     textVector.push_back(BytesTool::readString(_Encoding,
                                          _Fields[p + loper].Value,
