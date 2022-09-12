@@ -401,9 +401,17 @@ int SCPSection10::getLeadMeasurements(LeadMeasurements& mes)
 
             for (int j = 0; j < len; j++)
             {
-                mes.Measurements[i].setMeasurement((MeasurementType) j,
-                                                   _LeadMeasurements[i].getMeasurement((MeasurementType) j));
-                //mes.Measurements[i][(MeasurementType) j] = _LeadMeasurements[i][j];
+                MeasurementType mt = (MeasurementType) j;
+                bool bZero = (mt == MeasurementTypePmorphology)
+                             || (mt == MeasurementTypeTmorphology)
+                             || (mt == MeasurementTypeQualityCode)
+                             || (mt > MeasurementTypeSTamp1_8RR);
+                short value = _LeadMeasurements[i].getMeasurement(mt);
+
+                if ((bZero && (value != 0)) || (!bZero && (value != LeadMeasurement::NoValue)))
+                {
+                    mes.Measurements[i].setMeasurement(mt, value);
+                }
             }
         }
 
@@ -422,14 +430,15 @@ int SCPSection10::setLeadMeasurements(LeadMeasurements& mes)
     for (int i = 0; i < nrLeads; i++)
     {
         int nrValues = mes.Measurements[i].getMeasurementCount();
+        SCP_PD("[%d]nrValues[%d]\n", i, nrValues);
         //        nrValues = (nrLeads > 0) ? ((int) mes.Measurements[i].getKeyByIndex(nrValues-1))+1 : 0;
         _LeadMeasurements[i].setLeadType(mes.Measurements[i].leadType);
-        _LeadMeasurements[i].setCount(MeasurementTypeSum);
-        nrValues = mes.Measurements[i].getMeasurementCount();
+        _LeadMeasurements[i].setCount(nrValues);
+        //nrValues = mes.Measurements[i].getMeasurementCount();
 
         for (int j = 0; j < (int)MeasurementTypeSum; j++)
         {
-            if (mes.Measurements[i].getMeasurementValid((MeasurementType) i))
+            if (mes.Measurements[i].getMeasurementValid((MeasurementType) j))
             {
                 _LeadMeasurements[i].setMeasurement((MeasurementType)j,
                                                     mes.Measurements[i].getMeasurement((MeasurementType)j));

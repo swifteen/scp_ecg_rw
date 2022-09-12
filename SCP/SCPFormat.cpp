@@ -388,6 +388,7 @@ int SCPFormat::getSignals(Signals& signals)
 
     if ((section3 == null) || (section3->getSignals(signals) != 0))
     {
+        SCP_PE("");
         return 2;
     }
 
@@ -425,10 +426,12 @@ int SCPFormat::getSignals(Signals& signals)
 
     SCPSection6* rhythm = dynamic_cast<SCPSection6*>(_Default[6]);//rhythm
     SCPSection2* section2 = dynamic_cast<SCPSection2*>(_Default[2]);
+    std::vector<int> rhythmDataLengthVector;
     short** rhythmData = rhythm->DecodeData(section2,
                                             section3,
                                             section4,
-                                            signals.MedianSamplesPerSecond);
+                                            signals.MedianSamplesPerSecond,
+                                            rhythmDataLengthVector);
     signals.RhythmAVM = rhythm->getAVM();
 
     if (rhythmData == null)
@@ -464,9 +467,11 @@ int SCPFormat::getSignals(Signals& signals)
         ((SCPSection4) _Default[4]).AddMedians((SCPSection3) _Default[3], rhythmData, medianData);
     }
     else
+#endif
     {
-        signals.RhythmAVM = rhythm.getAVM();
-        signals.RhythmSamplesPerSecond = rhythm.getSamplesPerSecond();
+        signals.RhythmAVM = rhythm->getAVM();
+        signals.RhythmSamplesPerSecond = rhythm->getSamplesPerSecond();
+#if 0 //TODO for median data
 
         // Begin: special correction for SCP-ECG by corpuls (part 2)
         if ((_Default[5] != null)
@@ -494,13 +499,14 @@ int SCPFormat::getSignals(Signals& signals)
         }
 
         // End: special correction for SCP-ECG by corpuls (part 2)
+#endif
     }
 
-#endif
-
+    //just change the ownership
     for (int loper = 0; loper < signals.getNrLeads(); loper++)
     {
         signals[loper].Rhythm = rhythmData[loper];
+        signals[loper].RhythmLength = rhythmDataLengthVector[loper];
     }
 
     //free the memory of the pointers to the rows

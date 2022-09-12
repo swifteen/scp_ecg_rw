@@ -11,10 +11,10 @@ namespace ECGSignals
 Signals::Signals()
 {
     // Rhythm Info.
-    RhythmAVM = 0; // AVM in uV
+    RhythmAVM = 0.0; // AVM in uV
     RhythmSamplesPerSecond = 0;
     // Median Info.
-    MedianAVM = 0; // AVM in uV
+    MedianAVM = 0.0; // AVM in uV
     MedianLength = 0; // Length in ms
     MedianSamplesPerSecond = 0;
     // QRS zones
@@ -268,12 +268,11 @@ void Signals::SetAVM(double avm)
             //ECGTool.ChangeMultiplier(this[i].Median, this.MedianAVM, avm);
         }
 
-        if (RhythmAVM != 0.0)
+        //if (RhythmAVM != 0.0)
         {
             RhythmAVM = avm;
         }
-
-        if (MedianAVM != 0.0)
+        //if (MedianAVM != 0.0)
         {
             MedianAVM = avm;
         }

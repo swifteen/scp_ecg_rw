@@ -191,7 +191,8 @@ void SCPSection6::setNrLeads(ushort nrleads)
 short** SCPSection6::DecodeData(SCPSection2* tables,
                                 SCPSection3* leadDefinition,
                                 SCPSection4* qrsLocations,
-                                int medianFreq)
+                                int medianFreq,
+                                std::vector<int>& rhythmDataLengthVector)
 {
     int localFreq = getSamplesPerSecond();
 
@@ -241,6 +242,7 @@ short** SCPSection6::DecodeData(SCPSection2* tables,
         // Reset selected table.
         tables->ResetSelect();
         short** leads = new short*[_DataLength.size()];
+        rhythmDataLengthVector.resize(_DataLength.size());
 
         for (int loper = 0; loper < _DataLength.size(); loper++)
         {
@@ -268,6 +270,7 @@ short** SCPSection6::DecodeData(SCPSection2* tables,
 
             int decodeLength = 0;
             leads[loper] = tables->Decode(_Data[loper], _DataLength[loper], 0, _DataLength[loper], time, _Difference, &decodeLength);
+            rhythmDataLengthVector[loper] = decodeLength;//Get the data length after decode
 
             // Check if lead was decoded
             if (leads[loper] == null)

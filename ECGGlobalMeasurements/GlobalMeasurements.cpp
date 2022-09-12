@@ -147,23 +147,29 @@ ushort GlobalMeasurements::getQTc()
 
 void GlobalMeasurements::setQTcType(GlobalMeasurement::QTcCalcType QTcType)
 {
+    //SCP_PD("_QTc[%d],QTcType[%d]\n",_QTc,QTcType);
     if (QTcType != GlobalMeasurement::QTcCalcTypeUnknown)
     {
-        _QTc = (ushort)(GlobalMeasurement::NoValue + QTcType);
+        _QTc = (ushort)(GlobalMeasurement::NoValue + (ushort)QTcType);
     }
     else if (_QTc >= GlobalMeasurement::NoValue)
     {
         _QTc = 0;
     }
+
+    //SCP_PD("_QTc[%d],QTcType[%d]\n",_QTc,QTcType);
 }
 
 GlobalMeasurement::QTcCalcType GlobalMeasurements::getQTcType()
 {
+    //SCP_PD("_QTc[%d]\n",_QTc);
     if (_QTc >= GlobalMeasurement::NoValue)
     {
+        //SCP_PD("_QTc[%d]\n",_QTc);
         return (GlobalMeasurement::QTcCalcType)(_QTc - GlobalMeasurement::NoValue);
     }
 
+    //SCP_PD("_QTc[%d]\n",_QTc);
     return GlobalMeasurement::QTcCalcTypeUnknown;
 }
 

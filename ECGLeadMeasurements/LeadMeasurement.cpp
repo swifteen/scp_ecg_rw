@@ -65,7 +65,7 @@ int LeadMeasurement::getMeasurementCount()
     {
         if (measurementExistArray[i])
         {
-            return count++;
+            count++;
         }
     }
 

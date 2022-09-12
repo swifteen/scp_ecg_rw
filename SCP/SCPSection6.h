@@ -35,7 +35,8 @@ public:
     short** DecodeData(SCPSection2* tables,
                        SCPSection3* leadDefinition,
                        SCPSection4* qrsLocations,
-                       int medianFreq);
+                       int medianFreq,
+                       std::vector<int>& rhythmDataLengthVector);
     /// <summary>
     /// Function to encode data in this section.
     /// </summary>
