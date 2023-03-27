@@ -56,9 +56,6 @@ add_library(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}  iconv)
 
-add_executable(test_scp_write test/TestScpEcgWriter.cpp)
-target_link_libraries(test_scp_write ${PROJECT_NAME})
-
 #添加测试目录
 add_subdirectory(tests)
 

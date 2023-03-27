@@ -2,7 +2,7 @@
 
 # 项目起源
 
-受限于嵌入式平台，只能运行C和C++程序，在网上找不到C++相关的SCP-ECG格式实现，最后参考开源工程 [C# ECG Toolkit](https://sourceforge.net/projects/ecgtoolkit-cs/)，将C#代码转换为C++实现，仅仅只完成了SCP-ECG格式的写入功能
+受限于嵌入式平台，只能运行C和C++程序，在网上找不到C++相关的SCP-ECG格式实现，最后参考开源工程 [C# ECG Toolkit](https://sourceforge.net/projects/ecgtoolkit-cs/)，将C#代码转换为C++实现，完成了SCP-ECG格式Category II类别的写入和读取功能，还未大量测试验证，待续...
 
 # C# ECG Toolkit
 
@@ -10,7 +10,7 @@ ECG Toolkit support for: SCP-ECG, DICOM, HL7 aECG, ISHNE & MUSE-XML
 
 https://sourceforge.net/projects/ecgtoolkit-cs/
 
-![RecordOverview](.\SCP-ECG Figure\SCP-ECG class.svg)
+![SCP-ECG_class](https://github.com/swifteen/scp_ecg_rw/blob/main/doc/SCP-ECG_Figure/SCP-ECG_class.svg?raw=true)
 
 # 项目依赖
 
